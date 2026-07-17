@@ -28,6 +28,17 @@ The Retriever SHALL return only current, confirmed, undeleted items relevant to 
 - **WHEN** a synthetic account has more than eight confirmed items across unrelated topics
 - **THEN** the context includes at most eight relevant items and does not inject the complete profile
 
+### Requirement: Explicit correction preserves a memory timeline
+An explicit user correction SHALL supersede the current confirmed Profile Item with the same owner and semantic key, close its validity interval, and make only the replacement current for retrieval.
+
+#### Scenario: User corrects a preference
+- **WHEN** a synthetic user explicitly changes a previously confirmed preference
+- **THEN** the old item is marked superseded with `validTo`, the new item is confirmed, and retrieval returns only the new value
+
+#### Scenario: Another owner has the same semantic key
+- **WHEN** one synthetic user corrects a memory whose key also exists for another owner
+- **THEN** only the correcting user's current version is superseded
+
 ### Requirement: Observer failure isolation
 Memory extraction failure MUST NOT replace, fabricate or discard an otherwise successful assistant reply.
 

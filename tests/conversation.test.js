@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const {
   ConversationService, InMemoryMessageRepository, ValidationError,
 } = require('../packages/conversation');
-const { toModelMessages, parseAgentEnvelope } = require('../cloudfunctions/conversations/model-adapter');
+const { CloudBaseModelAdapter, toModelMessages, parseAgentEnvelope } = require('../cloudfunctions/conversations/model-adapter');
 
 function fixture(modelGenerate) {
   let id = 0;
@@ -88,4 +88,35 @@ test('agent envelope accepts strict JSON and degrades plain model text to a fina
     type: 'tool', toolName: 'current_time', arguments: {},
   });
   assert.deepEqual(parseAgentEnvelope('直接回答'), { type: 'final', text: '直接回答' });
+});
+
+test('CloudBase model adapter routes fast, reasoner, multimodal, and observer workloads independently', async () => {
+  const calls = [];
+  const ai = {
+    createModel(provider) {
+      assert.equal(provider, 'cloudbase');
+      return {
+        async generateText(input) {
+          calls.push(input.model);
+          return { text: input.messages[0].content.includes('记忆观察器')
+            ? '{"candidates":[]}'
+            : '{"type":"final","text":"路由完成"}' };
+        },
+      };
+    },
+  };
+  const adapter = new CloudBaseModelAdapter({
+    ai, modelName: 'base-model', fastModelName: 'fast-model',
+    reasonerModelName: 'reasoner-model', multimodalModelName: 'vision-model',
+    observerModelName: 'observer-model',
+  });
+  const common = {
+    skill: { version: '1.0.0', instructions: '测试' }, history: [], memoryItems: [],
+    availableTools: [], toolResults: [], step: 1, maxSteps: 3,
+  };
+  await adapter.next({ ...common, capability: 'general', input: { text: '你好' } });
+  await adapter.next({ ...common, capability: 'personal_advice', input: { text: '怎么选' } });
+  await adapter.next({ ...common, capability: 'general', input: { text: '看图', imageUrl: 'https://files.example/image.jpg' } });
+  await adapter.extractMemories({ text: '虚构偏好' });
+  assert.deepEqual(calls, ['fast-model', 'reasoner-model', 'vision-model', 'observer-model']);
 });

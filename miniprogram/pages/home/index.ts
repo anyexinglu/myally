@@ -22,10 +22,21 @@ function requestId() {
 Page({
   data: {
     messages: [WELCOME], conversationId: '', text: '', selectedImage: '',
-    sending: false, anchor: 'message-welcome', temporary: false,
+    sending: false, anchor: 'message-welcome', temporary: false, headerTop: 44,
   },
   async onLoad() {
+    this.syncChromeMetrics();
     await this.loadNormalConversation();
+  },
+  syncChromeMetrics() {
+    try {
+      const capsule = wx.getMenuButtonBoundingClientRect();
+      const system = wx.getSystemInfoSync();
+      const fallbackTop = (system.statusBarHeight || 20) + 4;
+      this.setData({ headerTop: Math.max(capsule.top || 0, fallbackTop) });
+    } catch (_) {
+      this.setData({ headerTop: 44 });
+    }
   },
   async loadNormalConversation() {
     const conversationId = wx.getStorageSync('myallyConversationId') || '';
@@ -41,8 +52,8 @@ Page({
       }
     } catch (_) {}
   },
-  async toggleTemporary(event) {
-    const temporary = !!event.detail.value;
+  async toggleTemporary() {
+    const temporary = !this.data.temporary;
     if (temporary) {
       this.setData({ temporary: true, conversationId: '', messages: [TEMP_WELCOME], anchor: 'message-temp-welcome' });
     } else {

@@ -74,13 +74,14 @@ CloudBase官方文档确认`cloud.ai().createModel(...).generateText(...)`支持
 - OpenSpec 1.6.0固定为项目开发依赖，proposal、design、四类规格和tasks通过严格校验；
 - `packages/agent、memory、skills、tools`实现最多3步Agent Loop、三类Skill、白名单工具、Policy Engine和来源隔离；
 - ConversationService接入相关记忆、Agent、回答级引用、临时模式和Observer失败隔离；
+- 显式纠正使用稳定语义key关闭旧confirmed版本，保留时间线且只召回当前版本；
 - CloudBase适配新增`observations/profile_items` Repository、记忆列表/删除action、Agent模型信封和Observer模型调用；
 - 首页新增临时对话及记忆/工具状态；“我的空间”新增记忆中心和删除；
 - Fake Model演示跑通两轮记忆改变回答、`current_time`工具、临时模式、删除和双账号隔离。
 
-本地实测：23/23测试、26个必需文件结构/部署副本检查、TypeScript检查、两个演示流程和OpenSpec严格校验通过。微信开发者工具Stable 2.01.2510290已使用正式AppID重新编译新UI，构建面板为0个问题，CLI成功生成43.2KB预览包和二维码。`cloudbase/schema.json`与`npm run cloud:check/cloud:deploy`已固化集合、索引和无密钥部署流程。
+本地实测：32/32测试、26个必需文件结构/部署副本检查、TypeScript检查、两个演示流程和OpenSpec严格校验通过。契约测试新增工具参数Schema拒绝、零相关记忆过滤、末步工具不执行、同conversation双账号隔离、只读Skill、搜索不可用降级、推断记忆不召回、显式纠正时间线及fast/reasoner/multimodal/observer模型路由。Skill升级到v1.1，强化结论、现实约束、取舍、备选和最小下一步；专用模型未配置时继续回退单一基础模型。微信开发者工具Stable 2.01.2510290已使用正式AppID重新编译新UI，构建面板为0个问题，CLI成功生成43.2KB预览包和二维码。`cloudbase/schema.json`与`npm run cloud:check/cloud:deploy`已固化集合、索引和无密钥部署流程。
 
-真实部署检查发现，该AppID在开发者工具本地状态中仍为`cloudProject: false`，CloudBase环境数量为0；CLI查询环境同时返回微信侧`system error`。因此目前只能证明**POC-1B代码、本地闭环和前端预览构建完成**。CloudBase开通/绑定、集合与索引、AI+模型、云函数部署、数据库落库、真机真实回复和双账号端测仍未完成，不能称为“微信可真实对话已完成”。下一位Agent不得猜测环境ID；必须先由项目管理员在正式AppID下开通或选择测试环境，再继续OpenSpec任务7.1—7.5。
+真实部署检查发现，该AppID在开发者工具本地状态中仍为`cloudProject: false`，CloudBase环境数量为0；CLI查询环境同时返回微信侧`system error`。项目管理员已尝试开通，但当前扫码失败，明确保留为待补充，不阻塞其余本地研发。因此目前只能证明**POC-1B代码、本地闭环和前端预览构建完成**。CloudBase开通/绑定、集合与索引、AI+模型、云函数部署、数据库落库、真机真实回复和双账号端测仍未完成，不能称为“微信可真实对话已完成”。下一位Agent不得猜测环境ID；平台恢复后再继续OpenSpec任务7.1—7.5。
 
 ## 1. 当前已确认定位
 

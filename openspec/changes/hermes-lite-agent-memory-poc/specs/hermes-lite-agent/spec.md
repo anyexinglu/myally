@@ -34,3 +34,14 @@ The realtime search tool MUST expose unavailable or failure status when no worki
 #### Scenario: Search adapter is absent
 - **WHEN** a factual-research turn requests realtime search without a configured adapter
 - **THEN** the final response states that realtime verification was unavailable and does not claim fresh search results
+
+### Requirement: Configurable workload model routing
+The system SHALL allow ordinary/factual, personal-reasoning, multimodal, and memory-observer workloads to use independently configured models and SHALL fall back to one configured base model when specialized model names are absent.
+
+#### Scenario: Specialized models are configured
+- **WHEN** synthetic fast, reasoner, multimodal, and observer model names are configured
+- **THEN** general or factual work uses fast, personal advice uses reasoner, image input uses multimodal, and memory extraction uses observer
+
+#### Scenario: Only a base model is configured
+- **WHEN** no specialized model names are configured
+- **THEN** all four workloads use the base model without changing the Conversation or Agent contract

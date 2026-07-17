@@ -37,6 +37,12 @@ class CloudBaseMessageRepository {
 class CloudBaseMemoryRepository {
   async addObservation(item) { await observations.add({ data: item }); return item; }
   async addProfileItem(item) { await profileItems.add({ data: item }); return item; }
+  async supersede(ownerId, key, validTo) {
+    const result = await profileItems.where({ ownerId, key, status: 'confirmed' }).update({
+      data: { status: 'superseded', validTo, updatedAt: validTo },
+    });
+    return result.stats ? result.stats.updated : 0;
+  }
   async list(ownerId) {
     const result = await profileItems.where({ ownerId }).limit(100).get();
     return result.data.filter((item) => !item.deletedAt)
@@ -67,6 +73,9 @@ function makeService() {
     ai: cloud.ai(),
     provider: process.env.MYALLY_MODEL_PROVIDER || 'cloudbase',
     modelName: process.env.MYALLY_MODEL_NAME || 'glm-5v-turbo',
+    fastModelName: process.env.MYALLY_FAST_MODEL_NAME || '',
+    reasonerModelName: process.env.MYALLY_REASONER_MODEL_NAME || '',
+    multimodalModelName: process.env.MYALLY_MULTIMODAL_MODEL_NAME || '',
     observerModelName: process.env.MYALLY_OBSERVER_MODEL_NAME || '',
   });
   const memoryService = new MemoryService({

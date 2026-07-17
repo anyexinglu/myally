@@ -5,6 +5,11 @@ const clone = (value) => structuredClone(value);
 const CONFIRMED_SOURCES = new Set(['explicit_user_statement', 'explicit_user_correction']);
 const TYPES = new Set(['stable_fact', 'current_state', 'preference', 'goal', 'decision_rule', 'relationship_boundary', 'action_result']);
 
+function normalizeMemoryKey(raw, type, value, keywords = []) {
+  const source = typeof raw === 'string' && raw.trim() ? raw.trim() : `${type}.${keywords[0] || value}`;
+  return source.toLowerCase().replace(/[^\p{L}\p{N}._:-]+/gu, '_').replace(/^_+|_+$/g, '').slice(0, 100);
+}
+
 function normalizeCandidates(raw) {
   let value = raw;
   if (typeof raw === 'string') {
@@ -16,9 +21,9 @@ function normalizeCandidates(raw) {
     const type = TYPES.has(item.type) ? item.type : item.type === 'fact' ? 'stable_fact' : null;
     const content = typeof item.value === 'string' ? item.value.trim() : '';
     if (!type || !content || content.length > 500) return null;
+    const keywords = Array.isArray(item.keywords) ? item.keywords.filter((x) => typeof x === 'string').slice(0, 8) : [];
     return {
-      type, value: content,
-      keywords: Array.isArray(item.keywords) ? item.keywords.filter((x) => typeof x === 'string').slice(0, 8) : [],
+      key: normalizeMemoryKey(item.key, type, content, keywords), type, value: content, keywords,
       sourceType: typeof item.sourceType === 'string' ? item.sourceType : 'model_inference',
       confidence: ['high', 'medium', 'low'].includes(item.confidence) ? item.confidence : 'medium',
       sensitivity: ['high', 'medium', 'low'].includes(item.sensitivity) ? item.sensitivity : 'low',
@@ -30,6 +35,18 @@ class InMemoryMemoryRepository {
   constructor() { this.observations = []; this.items = []; }
   async addObservation(item) { this.observations.push(clone(item)); return clone(item); }
   async addProfileItem(item) { this.items.push(clone(item)); return clone(item); }
+  async supersede(ownerId, key, validTo) {
+    let count = 0;
+    for (const item of this.items) {
+      if (item.ownerId === ownerId && item.key === key && item.status === 'confirmed' && !item.deletedAt && !item.validTo) {
+        item.status = 'superseded';
+        item.validTo = validTo;
+        item.updatedAt = validTo;
+        count += 1;
+      }
+    }
+    return count;
+  }
   async list(ownerId) { return this.items.filter((item) => item.ownerId === ownerId && !item.deletedAt).map(clone); }
   async listCurrent(ownerId) {
     const now = new Date().toISOString();
@@ -69,8 +86,11 @@ class MemoryService {
       };
       await this.repository.addObservation(observation);
       if (status === 'confirmed') {
+        if (candidate.sourceType === 'explicit_user_correction' && typeof this.repository.supersede === 'function') {
+          await this.repository.supersede(ownerId, candidate.key, observedAt);
+        }
         const profile = {
-          id: this.idFactory(), ownerId, sourceMessageId: message.id, type: candidate.type,
+          id: this.idFactory(), ownerId, sourceMessageId: message.id, key: candidate.key, type: candidate.type,
           value: candidate.value, keywords: candidate.keywords, sourceType: candidate.sourceType,
           confidence: candidate.confidence, sensitivity: candidate.sensitivity, status,
           observedAt, validFrom: observedAt, validTo: null, deletedAt: null,
@@ -89,14 +109,16 @@ class MemoryService {
     if (temporary) return { items: [], context: '' };
     const source = await this.repository.listCurrent(ownerId);
     const needle = String(query || '').toLowerCase();
+    const requestsPersonalContext = /(结合我|我的情况|适合我|方案|计划|安排|下一步|怎么选|建议|取舍)/i.test(needle);
     const scored = source.map((item) => {
-      let score = ['preference', 'goal', 'decision_rule'].includes(item.type) ? 0.5 : 0;
+      let score = requestsPersonalContext && ['preference', 'goal', 'decision_rule'].includes(item.type) ? 0.5 : 0;
       for (const keyword of [item.value, ...(item.keywords || [])]) {
         const key = String(keyword).toLowerCase();
-        if (key && (needle.includes(key) || key.includes(needle))) score += 2;
+        if (needle && key && (needle.includes(key) || key.includes(needle))) score += 2;
       }
       return { item, score };
-    }).sort((a, b) => b.score - a.score || b.item.updatedAt.localeCompare(a.item.updatedAt));
+    }).filter(({ score }) => score > 0)
+      .sort((a, b) => b.score - a.score || b.item.updatedAt.localeCompare(a.item.updatedAt));
     const items = [];
     let chars = 0;
     for (const { item } of scored) {
@@ -128,5 +150,5 @@ class MemoryObserver {
 }
 
 module.exports = {
-  MemoryValidationError, InMemoryMemoryRepository, MemoryService, MemoryObserver, normalizeCandidates,
+  MemoryValidationError, InMemoryMemoryRepository, MemoryService, MemoryObserver, normalizeCandidates, normalizeMemoryKey,
 };

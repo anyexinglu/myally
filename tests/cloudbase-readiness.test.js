@@ -21,6 +21,8 @@ test('CloudBase schema declares the complete POC data and function surface', () 
       assert.ok(index.fields.every((field) => ['asc', 'desc'].includes(field.direction)));
     }
   }
+  const profileItems = schema.collections.find((item) => item.name === 'profile_items');
+  assert.ok(profileItems.indexes.some((index) => index.name === 'owner_key_status'));
 });
 
 test('CloudBase deployment helper never embeds an environment id or secret', () => {

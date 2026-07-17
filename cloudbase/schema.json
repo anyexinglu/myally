@@ -32,6 +32,7 @@
       "clientAccess": "deny",
       "indexes": [
         { "name": "owner_status_updated", "unique": false, "fields": [{ "name": "ownerId", "direction": "asc" }, { "name": "status", "direction": "asc" }, { "name": "updatedAt", "direction": "desc" }] },
+        { "name": "owner_key_status", "unique": false, "fields": [{ "name": "ownerId", "direction": "asc" }, { "name": "key", "direction": "asc" }, { "name": "status", "direction": "asc" }] },
         { "name": "owner_item_id", "unique": true, "fields": [{ "name": "ownerId", "direction": "asc" }, { "name": "id", "direction": "asc" }] }
       ]
     }
@@ -42,6 +43,9 @@
     "MYALLY_MODEL_NAME"
   ],
   "optionalConversationEnvironment": [
+    "MYALLY_FAST_MODEL_NAME",
+    "MYALLY_REASONER_MODEL_NAME",
+    "MYALLY_MULTIMODAL_MODEL_NAME",
     "MYALLY_OBSERVER_MODEL_NAME",
     "MYALLY_SEARCH_ENDPOINT",
     "MYALLY_SEARCH_API_KEY"

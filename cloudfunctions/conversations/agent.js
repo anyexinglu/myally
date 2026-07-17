@@ -41,12 +41,27 @@ class AgentOrchestrator {
         return { text: decision.text, capability, skillVersion: skill.version, toolCalls, usedMemoryIds: memoryItems.map((item) => item.id) };
       }
 
+      if (step >= this.maxSteps) {
+        toolCalls.push({ name: decision.toolName, status: 'denied' });
+        return {
+          text: '我已达到本轮工具调用上限，最后一次工具请求没有执行；当前信息不足以可靠完成这次回答。',
+          capability, skillVersion: skill.version, toolCalls,
+          usedMemoryIds: memoryItems.map((item) => item.id), bounded: true,
+        };
+      }
+
       const tool = this.tools.get(decision.toolName);
       const authorization = this.policy.authorize(decision.toolName, tool, { ownerId, temporary });
       if (!authorization.allowed) {
         toolCalls.push({ name: decision.toolName, status: 'denied' });
         toolResults.push({ name: decision.toolName, status: 'denied', code: authorization.code });
       } else {
+        const argumentsCheck = this.tools.validateArguments(decision.toolName, decision.arguments);
+        if (!argumentsCheck.valid) {
+          toolCalls.push({ name: decision.toolName, status: 'denied' });
+          toolResults.push({ name: decision.toolName, status: 'denied', code: argumentsCheck.code });
+          continue;
+        }
         try {
           const output = await this.tools.execute(decision.toolName, decision.arguments, { ownerId, temporary, inputText });
           const status = output && output.status === 'unavailable' ? 'unavailable' : 'ok';

@@ -14,7 +14,9 @@ test('router loads a versioned skill for personal advice and factual research', 
   const skills = new SkillRegistry();
   assert.equal(router.route('结合我的情况给个低风险方案'), 'personal_advice');
   assert.equal(router.route('查一下今天最新的模型发布'), 'factual_research');
-  assert.equal(skills.get('personal_advice').version, '1.0.0');
+  assert.equal(skills.get('personal_advice').version, '1.1.0');
+  assert.match(skills.get('personal_advice').instructions, /当前输入优先/);
+  assert.match(skills.get('personal_advice').instructions, /取舍/);
   assert.equal(skills.get('unknown'), null);
 });
 
@@ -56,6 +58,36 @@ test('unknown write tool is denied and never executed', async () => {
   const result = await agent.run({ ownerId: 'user-a', input: { text: '替我发消息' }, history: [], memoryItems: [] });
   assert.equal(calls, 2);
   assert.deepEqual(result.toolCalls, [{ name: 'send_message', status: 'denied' }]);
+});
+
+test('tool arguments must satisfy the registered JSON schema before execution', async () => {
+  let executions = 0;
+  const tools = new ToolRegistry();
+  tools.register({
+    name: 'strict_lookup', description: '严格查询', readOnly: true,
+    inputSchema: {
+      type: 'object', required: ['query'], additionalProperties: false,
+      properties: { query: { type: 'string', minLength: 1 } },
+    },
+    execute: async () => { executions += 1; return { status: 'ok' }; },
+  });
+  const model = {
+    async next(input) {
+      if (!input.toolResults.length) {
+        return { type: 'tool', toolName: 'strict_lookup', arguments: { query: '', unsafe: true } };
+      }
+      assert.equal(input.toolResults[0].status, 'denied');
+      assert.equal(input.toolResults[0].code, 'INVALID_TOOL_ARGUMENTS');
+      return { type: 'final', text: '参数不合法，未执行查询。' };
+    },
+  };
+  const agent = new AgentOrchestrator({
+    model, router: new CapabilityRouter(), skills: new SkillRegistry(),
+    tools, policy: new PolicyEngine(),
+  });
+  const result = await agent.run({ ownerId: 'user-a', input: { text: '查询' }, history: [], memoryItems: [] });
+  assert.equal(executions, 0);
+  assert.deepEqual(result.toolCalls, [{ name: 'strict_lookup', status: 'denied' }]);
 });
 
 test('observer confirms explicit user memory but rejects assistant-source pollution', async () => {
@@ -106,6 +138,63 @@ test('retrieval is owner-scoped, bounded, deletable, and disabled in temporary m
   assert.equal(await memory.delete('user-b', mine.items[0].id), false);
   assert.equal(await memory.delete('user-a', mine.items[0].id), true);
   assert.equal((await memory.retrieve('user-a', '低风险')).items.length, 0);
+});
+
+test('retrieval excludes zero-relevance memories instead of injecting the complete profile', async () => {
+  let id = 0;
+  const repository = new InMemoryMemoryRepository();
+  const memory = new MemoryService({ repository, idFactory: () => `relevance-${++id}` });
+  const message = (index) => ({
+    id: `msg-${index}`, role: 'user', text: `虚构偏好${index}`,
+    provenance: { source: 'user_message', memoryEligible: true },
+  });
+  for (let index = 0; index < 10; index += 1) {
+    await memory.recordCandidates('user-a', message(index), [{
+      type: 'preference', value: `虚构偏好${index}`, keywords: [`偏好${index}`],
+      sourceType: 'explicit_user_statement', confidence: 'high', sensitivity: 'low',
+    }]);
+  }
+  const unrelated = await memory.retrieve('user-a', '今天上海天气如何');
+  assert.equal(unrelated.items.length, 0);
+  assert.equal(unrelated.context, '');
+  const planning = await memory.retrieve('user-a', '结合我的情况给一个计划');
+  assert.equal(planning.items.length, 8);
+});
+
+test('explicit correction closes the previous memory version and retrieves only the current value', async () => {
+  let id = 0;
+  let now = '2026-07-17T08:00:00.000Z';
+  const repository = new InMemoryMemoryRepository();
+  const memory = new MemoryService({
+    repository, idFactory: () => `timeline-${++id}`, now: () => new Date(now),
+  });
+  const message = (messageId, text) => ({
+    id: messageId, role: 'user', text,
+    provenance: { source: 'user_message', memoryEligible: true },
+  });
+  await memory.recordCandidates('owner-a', message('old-message', '我一直偏好低风险方案'), [{
+    key: 'preference.risk_tolerance', type: 'preference', value: '偏好低风险方案', keywords: ['风险方案'],
+    sourceType: 'explicit_user_statement', confidence: 'high', sensitivity: 'low',
+  }]);
+  await memory.recordCandidates('owner-b', message('other-owner-message', '我也偏好低风险方案'), [{
+    key: 'preference.risk_tolerance', type: 'preference', value: '偏好低风险方案', keywords: ['风险方案'],
+    sourceType: 'explicit_user_statement', confidence: 'high', sensitivity: 'low',
+  }]);
+  now = '2026-07-18T09:30:00.000Z';
+  await memory.recordCandidates('owner-a', message('new-message', '纠正一下，我现在愿意接受高风险方案'), [{
+    key: 'preference.risk_tolerance', type: 'preference', value: '愿意接受高风险方案', keywords: ['风险方案'],
+    sourceType: 'explicit_user_correction', confidence: 'high', sensitivity: 'low',
+  }]);
+
+  const history = await memory.list('owner-a');
+  assert.equal(history.length, 2);
+  assert.equal(history[0].status, 'superseded');
+  assert.equal(history[0].validTo, '2026-07-18T09:30:00.000Z');
+  assert.equal(history[1].status, 'confirmed');
+  assert.equal(history[1].key, 'preference.risk_tolerance');
+  const current = await memory.retrieve('owner-a', '结合我的风险方案给建议');
+  assert.deepEqual(current.items.map((item) => item.value), ['愿意接受高风险方案']);
+  assert.deepEqual((await memory.retrieve('owner-b', '结合我的风险方案给建议')).items.map((item) => item.value), ['偏好低风险方案']);
 });
 
 test('temporary observer skips extraction and model failure is isolated', async () => {

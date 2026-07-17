@@ -5,13 +5,14 @@
     <text class="page-subtitle">查看它记住了什么，也可以随时删除。所有内容按微信账号隔离。</text>
   </view>
 
-  <view class="section-heading"><text class="section-title">个人记忆</text><text class="hint">{{memories.length}} 条已确认</text></view>
+  <view class="section-heading"><text class="section-title">个人记忆</text><text class="hint">{{memories.length}} 个版本</text></view>
   <view wx:if="{{!loading && !error && memories.length === 0}}" class="memory-empty card">
     <text class="hint">还没有长期记忆。你可以在对话中明确说出偏好或目标。</text>
   </view>
   <view class="memory-card card" wx:for="{{memories}}" wx:key="id">
-    <view class="row between"><text class="tag">{{item.type}}</text><text class="visibility">已确认</text></view>
+    <view class="row between"><text class="tag">{{item.type}}</text><text class="visibility">{{item.status === 'superseded' ? '已更新' : '已确认'}}</text></view>
     <text class="memory-value">{{item.value}}</text>
+    <text wx:if="{{item.status === 'superseded'}}" class="hint">有效至：{{item.validTo}}</text>
     <view class="record-footer"><text class="hint">来源：{{item.observedAt || '用户明确表达'}}</text><button class="delete-button" data-id="{{item.id}}" bindtap="removeMemory">删除记忆</button></view>
   </view>
 

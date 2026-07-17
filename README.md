@@ -18,9 +18,11 @@
 - CloudBase视觉模型适配：云存储`fileId`只在服务端换临时URL，不向小程序暴露模型凭证；
 - `requestId`顺序幂等：已完成的同一轮请求不会重复调用模型，失败重试不会重复写用户消息；
 - 消息来源标记：用户消息`memoryEligible=true`，助手生成内容为`false`，为后续Hermes式观察/候选记忆留出安全边界；
-- Hermes-lite最多3步Agent Loop、`general / personal_advice / factual_research`能力路由和版本化只读Skill；
+- Hermes-lite最多3步Agent Loop、`general / personal_advice / factual_research`能力路由和版本化只读Skill v1.1；
+- 可选fast/reasoner/multimodal/observer模型路由；未配置专用模型时兼容回退到单一基础模型；
 - `current_time / memory_search / realtime_search`白名单读取工具、统一Policy Engine和写工具拒绝；
 - LLM Memory Observer、Observation/Profile Item分层、相关记忆注入和回答级记忆引用；
+- 显式纠正按owner与稳定语义key关闭旧版本，只召回当前值，同时保留可审计时间线；
 - `observations`与`profile_items` CloudBase Repository、owner隔离、记忆列表和删除API；
 - 首页临时对话开关；临时模式不读取、不检索也不生成长期记忆；
 - “我的空间”已增加记忆中心、来源时间和删除入口；
@@ -41,7 +43,9 @@ npm install
 npm run verify
 ```
 
-最近实测（2026-07-17）：23/23领域、契约与部署清单测试通过，26个必需文件结构检查、部署副本一致性和TypeScript检查通过。`npm run demo:agent`真实跑通Fake Model两轮记忆影响回答、一次工具调用、临时模式、删除和双账号隔离。微信开发者工具Stable 2.01.2510290已用正式AppID重新编译本轮UI，构建面板为0个问题，并由CLI成功生成43.2KB预览包和二维码。当前AppID尚未开通CloudBase：工具侧记录为`cloudProject: false`且环境列表为空，环境接口也返回微信侧`system error`，因此真实数据库、云函数和模型链路尚不能部署；扫码只证明前端预览包可生成，不等于AI端到端完成。
+最近实测（2026-07-17）：32/32领域、契约与部署清单测试通过，26个必需文件结构检查、部署副本一致性和TypeScript检查通过。新增契约覆盖工具参数Schema拒绝、零相关记忆过滤、末步工具不执行、同conversation双账号隔离、只读Skill、搜索不可用降级、推断记忆不召回、显式纠正的版本时间线及四类模型路由。`npm run demo:agent`真实跑通Fake Model两轮记忆影响回答、一次工具调用、临时模式、删除和双账号隔离。微信开发者工具Stable 2.01.2510290已用正式AppID重新编译本轮UI，构建面板为0个问题，并由CLI成功生成43.2KB预览包和二维码。当前AppID尚未开通CloudBase：工具侧记录为`cloudProject: false`且环境列表为空，环境接口也返回微信侧`system error`；项目管理员本轮开通扫码失败，因此真实数据库、云函数和模型链路继续列为待补充。扫码只证明前端预览包可生成，不等于AI端到端完成。
+
+首页安全区修复（2026-07-17）：顶部根据微信胶囊位置动态计算起点，“私密对话 / 临时对话”改为胶囊左侧的轻量状态入口；输入框按底部导航高度和`safe-area-inset-bottom`定位，导航使用`border-box`避免实际高度超出声明值。本轮`npm run verify`通过，开发者工具可识别新版页面节点且问题面板为0；本机ScreenCaptureKit在复查时启动失败，因此仍需以开发者工具模拟器或真机截图完成最终视觉留档。
 
 ## 微信开发者工具接入
 
@@ -49,7 +53,7 @@ npm run verify
 2. 在开发者工具中选择测试/正式AppID；真实AppID所在的`project.config.json`和`project.private.config.json`均已Git忽略，不得强制加入版本库。
 3. 在开发者工具中先开通或绑定CloudBase测试环境；若工具显示`cloudProject: false`或环境列表为空，必须由项目管理员完成开通。然后在`miniprogram/config/env.ts`本机填写环境ID，不提交真实值。
 4. 创建`entries`、`messages`、`observations`和`profile_items`集合；安全规则禁止小程序端直接读写，所有访问只经云函数。建议索引见OpenSpec change的`design.md`。
-5. 在CloudBase AI+开启模型；默认适配`cloudbase`提供方和`glm-5v-turbo`。可设置`MYALLY_MODEL_PROVIDER`、`MYALLY_MODEL_NAME`和`MYALLY_OBSERVER_MODEL_NAME`。如需实时搜索，再配置受信HTTPS服务的`MYALLY_SEARCH_ENDPOINT`和仅存在于云函数环境的`MYALLY_SEARCH_API_KEY`。
+5. 在CloudBase AI+开启模型；默认适配`cloudbase`提供方和`glm-5v-turbo`。`MYALLY_MODEL_NAME`是基础回退；可选设置`MYALLY_FAST_MODEL_NAME`、`MYALLY_REASONER_MODEL_NAME`、`MYALLY_MULTIMODAL_MODEL_NAME`和`MYALLY_OBSERVER_MODEL_NAME`。如需实时搜索，再配置受信HTTPS服务的`MYALLY_SEARCH_ENDPOINT`和仅存在于云函数环境的`MYALLY_SEARCH_API_KEY`。
 6. 分别在`cloudfunctions/entries`、`cloudfunctions/conversations`安装依赖并上传部署。
 7. `entries`云函数环境变量设置`ADMIN_OPENIDS=<照护者openid>`。
 8. 依次验证文字→消息落库→模型回复、明确偏好→记忆中心→第二轮引用、当前时间→工具调用、删除→不再召回、临时模式→不读写记忆；最后用两个微信账号验证消息和记忆隔离。
@@ -66,7 +70,7 @@ npm run cloud:deploy
 
 ## 当前验收边界
 
-自动测试、Hermes-lite Fake Model闭环、TypeScript、OpenSpec严格校验、微信开发者工具编译和预览包生成已真实通过；真实CloudBase集合、模型和搜索服务尚未部署。本机已配置正式AppID且由`.gitignore`保护，但该AppID当前尚未开通CloudBase环境；开通并绑定测试环境后才能完成真实模型、数据库和双账号验收。当前口径是“POC-1B代码、本地验证与前端预览构建完成”，不是CloudBase集成或微信端到端完成。
+自动测试、Hermes-lite Fake Model闭环、TypeScript、OpenSpec严格校验、微信开发者工具编译和预览包生成已真实通过；真实CloudBase集合、模型和搜索服务尚未部署。本机已配置正式AppID且由`.gitignore`保护，但该AppID当前尚未开通CloudBase环境，项目管理员开通时扫码失败；恢复后才能完成真实模型、数据库和双账号验收。当前口径是“POC-1B代码、本地验证与前端预览构建完成”，不是CloudBase集成或微信端到端完成。
 
 ## 已知安全债
 

@@ -1,7 +1,10 @@
-<view class="chat-page">
+<view class="chat-page" style="padding-top: {{headerTop}}px;">
   <view class="chat-head">
-    <view><text class="brand">我在</text><text class="brand-subtitle">MYALLY</text></view>
-    <view class="mode-control"><text class="mode-label">临时</text><switch class="mode-switch" color="#4ecfa5" checked="{{temporary}}" bindchange="toggleTemporary" /></view>
+    <view class="brand-lockup"><text class="brand">我在</text><text class="brand-subtitle">MYALLY</text></view>
+    <view class="mode-control {{temporary ? 'temporary' : ''}}" bindtap="toggleTemporary">
+      <text class="mode-dot"></text>
+      <text>{{temporary ? '临时对话' : '私密对话'}}</text>
+    </view>
   </view>
 
   <view wx:if="{{temporary}}" class="temporary-banner">临时对话 · 不读取、不形成长期记忆</view>
