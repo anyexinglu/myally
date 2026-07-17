@@ -1,3 +1,4 @@
 {
-  "navigationBarTitleText": "有我 MyAlly"
+  "navigationStyle": "custom",
+  "disableScroll": true
 }

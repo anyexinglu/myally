@@ -1,3 +1,17 @@
-.compact { padding: 30rpx; }
-.between { justify-content: space-between; }
-.summary { display: block; font-size: 32rpx; line-height: 1.7; margin: 22rpx 0; }
+.watch-head { margin-bottom: 24rpx; }
+.privacy-banner { align-items: center; background: #eaf9f3; border: 1rpx solid #dff3eb; border-radius: 26rpx; display: flex; gap: 18rpx; margin-bottom: 26rpx; padding: 24rpx; }
+.banner-icon { align-items: center; background: #fff; border-radius: 50%; color: #34ad84; display: flex; flex: 0 0 62rpx; font-size: 30rpx; height: 62rpx; justify-content: center; }
+.banner-copy { display: flex; flex-direction: column; gap: 5rpx; }
+.banner-title { color: #28785f; font-size: 25rpx; font-weight: 680; }
+.banner-text { color: #648078; font-size: 22rpx; line-height: 1.55; }
+
+.state-card { align-items: center; display: flex; gap: 12rpx; justify-content: center; padding: 42rpx; }
+.state-dot { animation: pulse 1.2s ease-in-out infinite; background: #4ecfa5; border-radius: 50%; height: 12rpx; width: 12rpx; }
+@keyframes pulse { 50% { opacity: .3; transform: scale(.8); } }
+.denied-card, .empty-state { align-items: center; display: flex; flex-direction: column; gap: 11rpx; padding: 62rpx 34rpx; text-align: center; }
+.denied-icon, .empty-icon { align-items: center; background: #f1f7f4; border-radius: 50%; color: #45bb95; display: flex; font-size: 38rpx; height: 84rpx; justify-content: center; margin-bottom: 8rpx; width: 84rpx; }
+
+.watch-card { padding: 28rpx; }
+.summary { color: #25312d; display: block; font-size: 29rpx; line-height: 1.72; margin: 22rpx 0; }
+.watch-footer { align-items: center; border-top: 1rpx solid #edf2f0; display: flex; gap: 8rpx; padding-top: 17rpx; }
+.source-dot { color: #b3bcb9; }

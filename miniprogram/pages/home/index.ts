@@ -1,70 +1,63 @@
-import { callEntries, uploadInputFile } from '../../utils/cloud';
+import { callConversation, uploadInputFile } from '../../utils/cloud';
 
-const recorder = wx.getRecorderManager();
+const WELCOME = {
+  id: 'welcome', role: 'assistant', type: 'text',
+  text: '早上好，我在听。想从哪里开始？', createdAt: '刚刚', fileId: '', pending: false,
+};
+
+function requestId() {
+  return `wx-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
 
 Page({
   data: {
-    type: 'text', text: '', tempFilePath: '', recording: false,
-    shared: false, summary: '', saving: false,
+    messages: [WELCOME], conversationId: '', text: '', selectedImage: '',
+    sending: false, anchor: 'message-welcome',
   },
-  onLoad() {
-    recorder.onStop((result) => this.setData({ tempFilePath: result.tempFilePath, recording: false }));
-    recorder.onError(() => {
-      this.setData({ recording: false });
-      wx.showToast({ title: '录音失败', icon: 'none' });
-    });
-  },
-  selectType(event) {
-    this.setData({ type: event.currentTarget.dataset.type, tempFilePath: '' });
+  async onLoad() {
+    const conversationId = wx.getStorageSync('myallyConversationId') || '';
+    if (!conversationId) return;
+    try {
+      const messages = await callConversation('list', { conversationId }) as any[];
+      if (messages.length) this.setData({ messages, conversationId, anchor: `message-${messages[messages.length - 1].id}` });
+    } catch (_) {}
   },
   onText(event) { this.setData({ text: event.detail.value }); },
-  onSummary(event) { this.setData({ summary: event.detail.value }); },
-  onShared(event) { this.setData({ shared: event.detail.value }); },
-  toggleRecording() {
-    if (this.data.recording) {
-      recorder.stop();
-    } else {
-      this.setData({ tempFilePath: '', recording: true });
-      recorder.start({ format: 'mp3', duration: 60000 });
-    }
-  },
   async chooseImage() {
-    const result = await wx.chooseMedia({ count: 1, mediaType: ['image'], sourceType: ['album', 'camera'] });
-    this.setData({ tempFilePath: result.tempFiles[0].tempFilePath });
-  },
-  async save() {
-    if (this.data.saving) return;
-    if (this.data.shared && !this.data.summary.trim()) {
-      wx.showToast({ title: '请填写给照护者看的摘要', icon: 'none' }); return;
-    }
-    if (this.data.type === 'text' && !this.data.text.trim()) {
-      wx.showToast({ title: '请输入内容', icon: 'none' }); return;
-    }
-    if (this.data.type !== 'text' && !this.data.tempFilePath) {
-      wx.showToast({ title: this.data.type === 'voice' ? '请先录音' : '请先选择图片', icon: 'none' }); return;
-    }
-    this.setData({ saving: true });
-    wx.showLoading({ title: '保存中' });
     try {
-      let fileId = '';
-      if (this.data.type !== 'text') fileId = await uploadInputFile(this.data.tempFilePath, this.data.type);
-      await callEntries('create', {
-        payload: {
-          type: this.data.type,
-          text: this.data.type === 'text' ? this.data.text : '',
-          fileId,
-          visibility: this.data.shared ? 'shared' : 'private',
-          summary: this.data.shared ? this.data.summary : '',
-        },
-      });
-      this.setData({ text: '', tempFilePath: '', summary: '', shared: false });
-      wx.showToast({ title: '已保存', icon: 'success' });
+      const result = await wx.chooseMedia({ count: 1, mediaType: ['image'], sourceType: ['album', 'camera'], sizeType: ['compressed'] });
+      this.setData({ selectedImage: result.tempFiles[0].tempFilePath });
+    } catch (_) {}
+  },
+  clearImage() { this.setData({ selectedImage: '' }); },
+  async send() {
+    if (this.data.sending) return;
+    const text = this.data.text.trim();
+    const localImage = this.data.selectedImage;
+    if (!text && !localImage) return;
+    const id = requestId();
+    const optimistic = {
+      id: `local-${id}`, role: 'user', type: localImage ? 'image' : 'text',
+      text, fileId: localImage, createdAt: '刚刚', pending: true,
+    };
+    const messages = [...this.data.messages, optimistic];
+    this.setData({ messages, text: '', selectedImage: '', sending: true, anchor: `message-${optimistic.id}` });
+    try {
+      const fileId = localImage ? await uploadInputFile(localImage, 'image') : '';
+      const turn = await callConversation('send', { payload: {
+        requestId: id, conversationId: this.data.conversationId,
+        type: localImage ? 'image' : 'text', text, fileId,
+      } }) as any;
+      const next = [...messages.slice(0, -1), turn.userMessage, turn.assistantMessage];
+      wx.setStorageSync('myallyConversationId', turn.conversationId);
+      this.setData({ messages: next, conversationId: turn.conversationId, anchor: `message-${turn.assistantMessage.id}` });
     } catch (error) {
-      wx.showToast({ title: error.message || '保存失败', icon: 'none' });
+      this.setData({ messages: [...messages.slice(0, -1), { ...optimistic, pending: false, failed: true }] });
+      wx.showToast({ title: error.message || '发送失败，请稍后再试', icon: 'none' });
     } finally {
-      wx.hideLoading(); this.setData({ saving: false });
+      this.setData({ sending: false });
     }
   },
-  goMine() { wx.navigateTo({ url: '/pages/mine/index' }); },
-  goWatch() { wx.navigateTo({ url: '/pages/watch/index' }); },
+  goMine() { wx.redirectTo({ url: '/pages/mine/index' }); },
+  goWatch() { wx.redirectTo({ url: '/pages/watch/index' }); },
 });

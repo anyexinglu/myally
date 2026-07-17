@@ -24,4 +24,6 @@ Page({
     audio.src = result.fileList[0].tempFileURL;
     audio.play();
   },
+  goHome() { wx.redirectTo({ url: '/pages/home/index' }); },
+  goWatch() { wx.redirectTo({ url: '/pages/watch/index' }); },
 });

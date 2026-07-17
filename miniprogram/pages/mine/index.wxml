@@ -1,20 +1,42 @@
 <view class="container">
-  <view class="hero compact">
-    <view class="hero-title">我的记录</view>
-    <text class="hero-sub">只有你能查看原始内容；共享状态只开放摘要。</text>
+  <view class="page-head mine-head">
+    <text class="eyebrow">MY SPACE</text>
+    <text class="page-title">我的记录</text>
+    <text class="page-subtitle">你保存过的内容都在这里，原始内容始终仅自己可见。</text>
   </view>
-  <view wx:if="{{loading}}" class="card hint">加载中…</view>
-  <view wx:if="{{error}}" class="card error">{{error}}</view>
-  <view wx:if="{{!loading && !error && entries.length === 0}}" class="card hint">还没有记录</view>
-  <view class="card" wx:for="{{entries}}" wx:key="id">
+
+  <view class="record-summary">
+    <view class="summary-count"><text class="count-number">{{entries.length}}</text><text class="count-label">条记录</text></view>
+    <view class="summary-privacy"><text class="lock-mark">◇</text>原文仅自己可见</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="state-card card"><view class="state-dot"></view><text class="hint">正在加载记录…</text></view>
+  <view wx:if="{{error}}" class="state-card card error">{{error}}</view>
+  <view wx:if="{{!loading && !error && entries.length === 0}}" class="empty-state card">
+    <view class="empty-icon">＋</view>
+    <view class="section-title">还没有记录</view>
+    <text class="hint">从首页写下一件此刻想留下的事吧。</text>
+    <button class="empty-action" bindtap="goHome">去记录</button>
+  </view>
+
+  <view class="record-card card" wx:for="{{entries}}" wx:key="id">
     <view class="row between">
-      <text class="tag">{{item.type}}</text>
-      <text class="hint">{{item.visibility === 'shared' ? '已共享摘要' : '仅自己'}}</text>
+      <text class="tag">{{item.type === 'text' ? '文字' : (item.type === 'image' ? '图片' : '语音')}}</text>
+      <text class="visibility {{item.visibility === 'shared' ? 'shared' : ''}}">{{item.visibility === 'shared' ? '已共享摘要' : '仅自己'}}</text>
     </view>
     <text wx:if="{{item.type === 'text'}}" class="content">{{item.text}}</text>
     <image wx:elif="{{item.type === 'image'}}" class="media" src="{{item.fileId}}" mode="aspectFill" />
-    <button wx:else class="secondary mini" data-file="{{item.fileId}}" bindtap="play">播放语音</button>
-    <text wx:if="{{item.summary}}" class="summary">共享摘要：{{item.summary}}</text>
-    <button class="danger mini" data-id="{{item.id}}" bindtap="remove">删除</button>
+    <button wx:else class="voice-player" data-file="{{item.fileId}}" bindtap="play"><text class="play-icon">▶</text><text>播放语音</text></button>
+    <view wx:if="{{item.summary}}" class="shared-summary"><text class="summary-label">共享摘要</text><text>{{item.summary}}</text></view>
+    <view class="record-footer">
+      <text class="hint">{{item.createdAt || '已安全保存'}}</text>
+      <button class="delete-button" data-id="{{item.id}}" bindtap="remove">删除</button>
+    </view>
+  </view>
+
+  <view class="bottom-nav">
+    <view class="nav-item" bindtap="goHome"><text class="nav-icon">⌂</text><text class="nav-label">首页</text></view>
+    <view class="nav-item active"><text class="nav-icon">▤</text><text class="nav-label">我的</text></view>
+    <view class="nav-item" bindtap="goWatch"><text class="nav-icon">◎</text><text class="nav-label">守望</text></view>
   </view>
 </view>

@@ -2,7 +2,7 @@
   "name": "myally-miniapp-poc",
   "version": "0.1.0",
   "private": true,
-  "description": "有我 MyAlly｜AI全能分身助理微信小程序POC",
+  "description": "我在 MyAlly｜个人AI助理微信小程序POC",
   "scripts": {
     "test": "node --test tests/*.test.js",
     "typecheck": "tsc -p miniprogram/tsconfig.json --noEmit",
@@ -11,8 +11,11 @@
     "verify": "npm test && npm run check && npm run demo"
   },
   "devDependencies": {
+    "@fission-ai/openspec": "^1.6.0",
     "miniprogram-api-typings": "latest",
     "typescript": "latest"
   },
-  "engines": { "node": ">=22" }
+  "engines": {
+    "node": ">=22"
+  }
 }

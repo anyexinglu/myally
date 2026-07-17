@@ -1,19 +1,95 @@
-page { background: #f4f7f5; color: #15201c; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; }
-.container { padding: 32rpx; }
-.hero { background: linear-gradient(145deg, #10231d, #285244); color: white; border-radius: 32rpx; padding: 40rpx; margin-bottom: 28rpx; }
-.hero-title { font-size: 48rpx; font-weight: 700; margin-bottom: 12rpx; }
-.brand-en { font-size: 32rpx; font-weight: 600; opacity: .86; margin-left: 8rpx; }
-.hero-sub { display: block; margin-top: 12rpx; color: #d2e7df; line-height: 1.6; }
-.card { background: white; border-radius: 28rpx; padding: 28rpx; margin-bottom: 24rpx; box-shadow: 0 10rpx 36rpx rgba(20, 54, 43, .06); }
-.section-title { font-weight: 650; font-size: 30rpx; margin-bottom: 20rpx; }
-.row { display: flex; gap: 16rpx; align-items: center; }
-.mode { flex: 1; text-align: center; padding: 22rpx 8rpx; border-radius: 18rpx; background: #edf3f0; }
-.mode.active { color: white; background: #2e6b57; }
-.primary { background: #2e6b57 !important; color: white !important; border-radius: 999rpx !important; }
-.secondary { background: #e8efec !important; color: #21483a !important; border-radius: 999rpx !important; }
-.textarea, .input { width: 100%; box-sizing: border-box; background: #f2f5f4; border-radius: 18rpx; padding: 20rpx; }
-.textarea { min-height: 180rpx; }
-.hint { color: #6b7b75; font-size: 24rpx; line-height: 1.5; }
-.item { padding: 24rpx 0; border-bottom: 1rpx solid #edf0ef; }
-.tag { display: inline-block; padding: 6rpx 14rpx; border-radius: 999rpx; background: #e4f0eb; color: #2e6b57; font-size: 22rpx; }
-.error { color: #b33a3a; }
+page {
+  background: #f7faf9;
+  color: #17211e;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+  font-size: 28rpx;
+}
+
+button::after { border: 0; }
+
+.container {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 34rpx 32rpx calc(188rpx + env(safe-area-inset-bottom));
+}
+
+.page-head { margin: 8rpx 4rpx 32rpx; }
+.eyebrow { display: block; color: #33a981; font-size: 22rpx; font-weight: 650; letter-spacing: 2rpx; margin-bottom: 10rpx; }
+.page-title { display: block; color: #17211e; font-size: 46rpx; font-weight: 750; letter-spacing: -1rpx; line-height: 1.25; }
+.page-subtitle { display: block; color: #77837f; font-size: 25rpx; line-height: 1.6; margin-top: 10rpx; }
+
+.card {
+  background: #ffffff;
+  border: 1rpx solid #edf2f0;
+  border-radius: 28rpx;
+  box-shadow: 0 12rpx 40rpx rgba(34, 83, 68, .045);
+  box-sizing: border-box;
+  margin-bottom: 22rpx;
+  padding: 28rpx;
+}
+
+.section-title { color: #1d2925; font-size: 29rpx; font-weight: 680; line-height: 1.45; }
+.row { display: flex; align-items: center; gap: 16rpx; }
+.between { justify-content: space-between; }
+.hint { color: #8a9692; font-size: 23rpx; line-height: 1.55; }
+.error { color: #b94b4b; }
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  background: #e9f8f2;
+  border-radius: 999rpx;
+  color: #278f6c;
+  font-size: 21rpx;
+  font-weight: 650;
+  line-height: 1;
+  padding: 9rpx 16rpx;
+}
+
+.primary {
+  background: #4ecfa5 !important;
+  border-radius: 999rpx !important;
+  box-shadow: 0 12rpx 28rpx rgba(78, 207, 165, .22);
+  color: #ffffff !important;
+  font-size: 28rpx !important;
+  font-weight: 680;
+  line-height: 92rpx !important;
+}
+
+.primary[disabled] { opacity: .62; }
+.secondary { background: #e9f8f2 !important; border-radius: 999rpx !important; color: #278f6c !important; }
+.input, .textarea { background: #f5f8f7; border-radius: 22rpx; box-sizing: border-box; width: 100%; }
+
+.bottom-nav {
+  align-items: center;
+  background: rgba(255, 255, 255, .97);
+  border: 1rpx solid #e5efeb;
+  border-radius: 999rpx;
+  bottom: calc(22rpx + env(safe-area-inset-bottom));
+  box-shadow: 0 16rpx 52rpx rgba(25, 73, 57, .11);
+  display: flex;
+  height: 104rpx;
+  justify-content: space-between;
+  left: 32rpx;
+  padding: 8rpx;
+  position: fixed;
+  right: 32rpx;
+  z-index: 50;
+}
+
+.nav-item {
+  align-items: center;
+  border-radius: 999rpx;
+  color: #6f7a76;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  font-size: 20rpx;
+  gap: 2rpx;
+  height: 88rpx;
+  justify-content: center;
+}
+
+.nav-item.active { background: #4ecfa5; color: #ffffff; }
+.nav-icon { font-size: 31rpx; font-weight: 500; line-height: 1.1; }
+.nav-label { font-size: 20rpx; font-weight: 600; line-height: 1.2; }

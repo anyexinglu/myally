@@ -11,6 +11,8 @@ const required = [
   'miniprogram/pages/mine/index.ts', 'miniprogram/pages/watch/index.ts',
   'cloudfunctions/entries/index.js', 'cloudfunctions/entries/domain.js',
   'packages/domain/index.js',
+  'cloudfunctions/conversations/index.js', 'cloudfunctions/conversations/domain.js',
+  'cloudfunctions/conversations/model-adapter.js', 'packages/conversation/index.js',
 ];
 
 for (const file of required) {
@@ -19,7 +21,7 @@ for (const file of required) {
   if (fs.readFileSync(full, 'utf8').includes('...[truncated]')) throw new Error(`truncated marker found: ${file}`);
 }
 
-for (const file of ['project.config.json', 'project.config.example.json', 'miniprogram/app.json', 'miniprogram/sitemap.json', 'cloudfunctions/entries/package.json']) {
+for (const file of ['project.config.json', 'project.config.example.json', 'miniprogram/app.json', 'miniprogram/sitemap.json', 'cloudfunctions/entries/package.json', 'cloudfunctions/conversations/package.json']) {
   JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'));
 }
 
@@ -40,8 +42,15 @@ if (project.miniprogramRoot !== 'miniprogram/' || project.cloudfunctionRoot !== 
 const domain = fs.readFileSync(path.join(root, 'packages/domain/index.js'), 'utf8');
 const cloudDomain = fs.readFileSync(path.join(root, 'cloudfunctions/entries/domain.js'), 'utf8');
 if (domain !== cloudDomain) throw new Error('cloud function domain copy is out of sync');
+const conversationDomain = fs.readFileSync(path.join(root, 'packages/conversation/index.js'), 'utf8');
+const cloudConversationDomain = fs.readFileSync(path.join(root, 'cloudfunctions/conversations/domain.js'), 'utf8');
+if (conversationDomain !== cloudConversationDomain) throw new Error('conversation cloud function domain copy is out of sync');
 
-for (const file of ['packages/domain/index.js', 'cloudfunctions/entries/domain.js', 'cloudfunctions/entries/index.js']) {
+for (const file of [
+  'packages/domain/index.js', 'cloudfunctions/entries/domain.js', 'cloudfunctions/entries/index.js',
+  'packages/conversation/index.js', 'cloudfunctions/conversations/domain.js',
+  'cloudfunctions/conversations/model-adapter.js', 'cloudfunctions/conversations/index.js',
+]) {
   new vm.Script(fs.readFileSync(path.join(root, file), 'utf8'), { filename: file });
 }
 

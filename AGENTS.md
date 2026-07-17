@@ -1,17 +1,21 @@
-# 个人AI助理项目（原“有我 MyAlly”）｜Agent接手规则
+# 我在 MyAlly｜个人AI助理项目 Agent接手规则
 
 任何参与本项目的 Agent 在分析、规划或改代码前，必须依次阅读：
 
 1. `docs/PRODUCT-PLAN.md`：整体产品与技术主计划；
 2. `docs/PRODUCT-HANDOFF.md`：最新定位、讨论结论、竞品证据、关键取舍和待验证问题；
-3. `README.md`：当前代码实现与真实验收边界。
+3. `docs/OPENSPEC-WORKFLOW.md`：结构性变更的提案、实施、验证、同步和归档规则；
+4. `README.md`：当前代码实现与真实验收边界。
 
-如果三者冲突，以 `docs/PRODUCT-HANDOFF.md` 中日期最新且标为“已确认”的决策为准；随后更新主计划，不能静默沿用旧路线。
+如果上述文档冲突，以 `docs/PRODUCT-HANDOFF.md` 中日期最新且标为“已确认”的产品决策为准；已生效OpenSpec规格描述系统行为，README描述真实实现状态。必须显式解决冲突，不能静默沿用旧路线。
 
 ## 文档职责
 
 - `docs/PRODUCT-PLAN.md`：目标架构、阶段路线、交付物、验收标准；
 - `docs/PRODUCT-HANDOFF.md`：为什么这样做、讨论演进、证据来源、未决问题、交接状态；
+- `docs/OPENSPEC-WORKFLOW.md`：OpenSpec与现有文档的职责分工和操作约束；
+- `openspec/specs/`：初始化后保存当前已生效的可验证行为契约；
+- `openspec/changes/`：初始化后保存活跃变更及其proposal、design、tasks和spec delta；
 - `README.md`：代码当前真正实现了什么、如何运行和验证；
 - 代码注释：只解释局部实现，不承载产品决策。
 
@@ -36,6 +40,7 @@
 ## 工作纪律
 
 - 先设计、确认，再做结构性改动；
+- OpenSpec初始化后，结构性改动必须先建立change并获得用户确认，再进入实现；完成后先验证和同步规格，再归档；
 - 区分代码 POC、实际集成和端到端验收；
 - 未安装、未绑定、未部署、未真机测试的能力不得称为完成；
 - 优先复用经过许可证和源码审计的开源思想/模块，不整套照搬未经验证的项目；

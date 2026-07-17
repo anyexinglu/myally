@@ -1,0 +1,22 @@
+schema: spec-driven
+
+context: |
+  Product: 我在 MyAlly，微信原生小程序个人AI助理。
+  Stack: TypeScript miniprogram, Node.js cloud functions, CloudBase identity/database/storage/AI.
+  Architecture: domain packages are platform-neutral; CloudBase SDK stays in adapters/cloud functions.
+  Privacy: never place real conversations, profiles, OpenID, AppID, environment IDs, tokens, medical data, or production logs in Git. Use synthetic Chinese fixtures only.
+  Delivery: distinguish code POC, deployed integration, device E2E verification, and pilot effectiveness. Never claim unverified stages complete.
+  Required context: read AGENTS.md, docs/PRODUCT-PLAN.md, docs/PRODUCT-HANDOFF.md, docs/OPENSPEC-WORKFLOW.md, and README.md before implementation.
+
+rules:
+  proposal:
+    - Include explicit goals, non-goals, privacy impact, and deployment boundary.
+    - State current behavior and target behavior without describing unimplemented work as complete.
+  design:
+    - Define trusted identity, idempotency, failure degradation, tool policy, memory provenance, deletion propagation, and temporary-mode isolation.
+    - Keep ModelAdapter, repositories, skills, tools, and CloudBase replaceable.
+  specs:
+    - Every requirement must have at least one synthetic end-to-end scenario.
+    - Include negative scenarios for cross-account access, assistant-to-memory pollution, tool denial, and model failure.
+  tasks:
+    - Use test-first tasks and include local verification, CloudBase deployment, and device E2E as separate checkboxes.
