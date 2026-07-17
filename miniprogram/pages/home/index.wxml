@@ -1,8 +1,10 @@
 <view class="chat-page">
   <view class="chat-head">
     <view><text class="brand">我在</text><text class="brand-subtitle">MYALLY</text></view>
-    <view class="presence"><text class="sun">✣</text></view>
+    <view class="mode-control"><text class="mode-label">临时</text><switch class="mode-switch" color="#4ecfa5" checked="{{temporary}}" bindchange="toggleTemporary" /></view>
   </view>
+
+  <view wx:if="{{temporary}}" class="temporary-banner">临时对话 · 不读取、不形成长期记忆</view>
 
   <scroll-view class="message-list" scroll-y enhanced show-scrollbar="{{false}}" scroll-with-animation scroll-into-view="{{anchor}}">
     <view class="day-label">今天</view>
@@ -16,7 +18,10 @@
             <view wx:if="{{item.pending}}" class="sending-mark">发送中…</view>
           </view>
           <text wx:if="{{item.failed}}" class="failed-mark">发送失败</text>
-          <text wx:elif="{{item.role === 'assistant' && item.id === 'welcome'}}" class="memory-note">刚刚 · 你发送的内容会保存到私密空间</text>
+          <text wx:elif="{{item.role === 'assistant' && item.memoryCount}}" class="memory-note">使用了 {{item.memoryCount}} 条个人记忆</text>
+          <text wx:elif="{{item.role === 'assistant' && item.memoryStatus === 'failed'}}" class="memory-note warning-note">本次记忆整理失败，不影响当前回答</text>
+          <text wx:elif="{{item.role === 'assistant' && item.toolCalls.length}}" class="memory-note">已使用受控工具完成核验</text>
+          <text wx:elif="{{item.role === 'assistant' && item.id === 'welcome'}}" class="memory-note">内容经你的私密账号隔离保存</text>
         </view>
       </view>
     </block>
@@ -28,7 +33,7 @@
     <view wx:if="{{selectedImage}}" class="selected-image"><image src="{{selectedImage}}" mode="aspectFill" /><view class="remove-image" bindtap="clearImage">×</view></view>
     <view class="chat-composer">
       <view class="attach-button" bindtap="chooseImage"><text class="attach-icon">＋</text></view>
-      <input class="chat-input" maxlength="2000" confirm-type="send" placeholder="跟我说说…" placeholder-class="chat-placeholder" value="{{text}}" bindinput="onText" bindconfirm="send" />
+      <input class="chat-input" maxlength="2000" confirm-type="send" placeholder="{{temporary ? '临时说说…' : '跟我说说…'}}" placeholder-class="chat-placeholder" value="{{text}}" bindinput="onText" bindconfirm="send" />
       <button class="send-button {{text || selectedImage ? 'ready' : ''}}" disabled="{{sending || (!text && !selectedImage)}}" bindtap="send">↑</button>
     </view>
   </view>

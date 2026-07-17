@@ -3,9 +3,17 @@
 const cloud = require('wx-server-sdk');
 const { ConversationService, ValidationError } = require('./domain');
 const { CloudBaseModelAdapter } = require('./model-adapter');
+const { AgentOrchestrator } = require('./agent');
+const { MemoryService, MemoryObserver, MemoryValidationError } = require('./memory');
+const { SkillRegistry, CapabilityRouter } = require('./skills');
+const { ToolRegistry, PolicyEngine, createCoreTools } = require('./tools');
+const { HttpSearchAdapter } = require('./search-adapter');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV, timeout: 60000 });
-const collection = cloud.database().collection('messages');
+const database = cloud.database();
+const collection = database.collection('messages');
+const observations = database.collection('observations');
+const profileItems = database.collection('profile_items');
 
 class CloudBaseMessageRepository {
   async add(message) {
@@ -26,6 +34,27 @@ class CloudBaseMessageRepository {
   }
 }
 
+class CloudBaseMemoryRepository {
+  async addObservation(item) { await observations.add({ data: item }); return item; }
+  async addProfileItem(item) { await profileItems.add({ data: item }); return item; }
+  async list(ownerId) {
+    const result = await profileItems.where({ ownerId }).limit(100).get();
+    return result.data.filter((item) => !item.deletedAt)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  }
+  async listCurrent(ownerId) {
+    const now = new Date().toISOString();
+    const result = await profileItems.where({ ownerId, status: 'confirmed' }).limit(100).get();
+    return result.data.filter((item) => !item.deletedAt && (!item.validTo || item.validTo > now));
+  }
+  async delete(ownerId, id, deletedAt) {
+    const result = await profileItems.where({ ownerId, id }).update({
+      data: { status: 'deleted', deletedAt, updatedAt: deletedAt },
+    });
+    return !!(result.stats && result.stats.updated);
+  }
+}
+
 async function resolveImageUrl(fileId) {
   const result = await cloud.getTempFileURL({ fileList: [fileId] });
   const item = result.fileList && result.fileList[0];
@@ -34,20 +63,39 @@ async function resolveImageUrl(fileId) {
 }
 
 function makeService() {
+  const model = new CloudBaseModelAdapter({
+    ai: cloud.ai(),
+    provider: process.env.MYALLY_MODEL_PROVIDER || 'cloudbase',
+    modelName: process.env.MYALLY_MODEL_NAME || 'glm-5v-turbo',
+    observerModelName: process.env.MYALLY_OBSERVER_MODEL_NAME || '',
+  });
+  const memoryService = new MemoryService({
+    repository: new CloudBaseMemoryRepository(),
+    idFactory: () => `${Date.now()}-${Math.random().toString(36).slice(2, 12)}`,
+  });
+  const tools = new ToolRegistry();
+  const searchAdapter = process.env.MYALLY_SEARCH_ENDPOINT ? new HttpSearchAdapter({
+    endpoint: process.env.MYALLY_SEARCH_ENDPOINT,
+    apiKey: process.env.MYALLY_SEARCH_API_KEY || '',
+  }) : null;
+  for (const tool of createCoreTools({ memoryService, searchAdapter })) tools.register(tool);
+  const agent = new AgentOrchestrator({
+    model, router: new CapabilityRouter(), skills: new SkillRegistry(),
+    tools, policy: new PolicyEngine(), maxSteps: 3,
+  });
+  const observer = new MemoryObserver({ model, memoryService });
   return new ConversationService({
     repository: new CloudBaseMessageRepository(),
-    model: new CloudBaseModelAdapter({
-      ai: cloud.ai(),
-      provider: process.env.MYALLY_MODEL_PROVIDER || 'cloudbase',
-      modelName: process.env.MYALLY_MODEL_NAME || 'glm-5v-turbo',
-    }),
+    model, agent, memoryService, observer,
     imageUrlResolver: resolveImageUrl,
     idFactory: () => `${Date.now()}-${Math.random().toString(36).slice(2, 12)}`,
   });
 }
 
 function errorResponse(error) {
-  if (error instanceof ValidationError) return { ok: false, code: 'VALIDATION', message: error.message };
+  if (error instanceof ValidationError || error instanceof MemoryValidationError) {
+    return { ok: false, code: 'VALIDATION', message: error.message };
+  }
   console.error('conversations cloud function failed', { name: error.name, message: error.message });
   return { ok: false, code: 'MODEL_UNAVAILABLE', message: '我暂时没有成功回复，但你的输入已经安全记录，可以稍后重试。' };
 }
@@ -56,10 +104,13 @@ exports.main = async (event) => {
   const { OPENID } = cloud.getWXContext();
   const service = makeService();
   try {
+    if (!OPENID) throw new ValidationError('trusted user identity is unavailable');
     let data;
     switch (event.action) {
       case 'send': data = await service.send(OPENID, event.payload || {}); break;
       case 'list': data = await service.list(OPENID, event.conversationId); break;
+      case 'listMemories': data = await service.listMemories(OPENID); break;
+      case 'deleteMemory': data = await service.deleteMemory(OPENID, event.memoryId); break;
       default: throw new ValidationError('unknown action');
     }
     return { ok: true, data };

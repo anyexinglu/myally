@@ -1,9 +1,21 @@
 <view class="container">
   <view class="page-head mine-head">
     <text class="eyebrow">MY SPACE</text>
-    <text class="page-title">我的记录</text>
-    <text class="page-subtitle">你保存过的内容都在这里，原始内容始终仅自己可见。</text>
+    <text class="page-title">我的空间</text>
+    <text class="page-subtitle">查看它记住了什么，也可以随时删除。所有内容按微信账号隔离。</text>
   </view>
+
+  <view class="section-heading"><text class="section-title">个人记忆</text><text class="hint">{{memories.length}} 条已确认</text></view>
+  <view wx:if="{{!loading && !error && memories.length === 0}}" class="memory-empty card">
+    <text class="hint">还没有长期记忆。你可以在对话中明确说出偏好或目标。</text>
+  </view>
+  <view class="memory-card card" wx:for="{{memories}}" wx:key="id">
+    <view class="row between"><text class="tag">{{item.type}}</text><text class="visibility">已确认</text></view>
+    <text class="memory-value">{{item.value}}</text>
+    <view class="record-footer"><text class="hint">来源：{{item.observedAt || '用户明确表达'}}</text><button class="delete-button" data-id="{{item.id}}" bindtap="removeMemory">删除记忆</button></view>
+  </view>
+
+  <view class="section-heading record-heading"><text class="section-title">原有记录</text><text class="hint">{{entries.length}} 条</text></view>
 
   <view class="record-summary">
     <view class="summary-count"><text class="count-number">{{entries.length}}</text><text class="count-label">条记录</text></view>
@@ -14,7 +26,7 @@
   <view wx:if="{{error}}" class="state-card card error">{{error}}</view>
   <view wx:if="{{!loading && !error && entries.length === 0}}" class="empty-state card">
     <view class="empty-icon">＋</view>
-    <view class="section-title">还没有记录</view>
+    <view class="section-title">还没有原有记录</view>
     <text class="hint">从首页写下一件此刻想留下的事吧。</text>
     <button class="empty-action" bindtap="goHome">去记录</button>
   </view>

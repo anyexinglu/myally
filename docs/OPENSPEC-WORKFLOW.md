@@ -1,6 +1,6 @@
 # 我在 MyAlly｜OpenSpec迭代与归档规则
 
-> 决策日期：2026-07-17。状态：已确认采用，尚未执行`openspec init`。下一次结构性开发开始前完成初始化并提交首个变更提案。
+> 决策日期：2026-07-17。状态：已采用OpenSpec 1.6.0并完成`openspec init`。首个活跃变更为`hermes-lite-agent-memory-poc`。
 
 ## 1. 为什么采用
 

@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "collections": [
+    {
+      "name": "entries",
+      "clientAccess": "deny",
+      "indexes": [
+        { "name": "owner_created", "unique": false, "fields": [{ "name": "ownerId", "direction": "asc" }, { "name": "createdAt", "direction": "desc" }] },
+        { "name": "visibility_created", "unique": false, "fields": [{ "name": "visibility", "direction": "asc" }, { "name": "createdAt", "direction": "desc" }] },
+        { "name": "entry_id", "unique": true, "fields": [{ "name": "id", "direction": "asc" }] }
+      ]
+    },
+    {
+      "name": "messages",
+      "clientAccess": "deny",
+      "indexes": [
+        { "name": "owner_conversation_created", "unique": false, "fields": [{ "name": "ownerId", "direction": "asc" }, { "name": "conversationId", "direction": "asc" }, { "name": "createdAt", "direction": "asc" }] },
+        { "name": "owner_request", "unique": false, "fields": [{ "name": "ownerId", "direction": "asc" }, { "name": "requestId", "direction": "asc" }] },
+        { "name": "message_id", "unique": true, "fields": [{ "name": "id", "direction": "asc" }] }
+      ]
+    },
+    {
+      "name": "observations",
+      "clientAccess": "deny",
+      "indexes": [
+        { "name": "owner_source_message", "unique": false, "fields": [{ "name": "ownerId", "direction": "asc" }, { "name": "sourceMessageId", "direction": "asc" }] },
+        { "name": "observation_id", "unique": true, "fields": [{ "name": "id", "direction": "asc" }] }
+      ]
+    },
+    {
+      "name": "profile_items",
+      "clientAccess": "deny",
+      "indexes": [
+        { "name": "owner_status_updated", "unique": false, "fields": [{ "name": "ownerId", "direction": "asc" }, { "name": "status", "direction": "asc" }, { "name": "updatedAt", "direction": "desc" }] },
+        { "name": "owner_item_id", "unique": true, "fields": [{ "name": "ownerId", "direction": "asc" }, { "name": "id", "direction": "asc" }] }
+      ]
+    }
+  ],
+  "cloudFunctions": ["entries", "conversations"],
+  "requiredConversationEnvironment": [
+    "MYALLY_MODEL_PROVIDER",
+    "MYALLY_MODEL_NAME"
+  ],
+  "optionalConversationEnvironment": [
+    "MYALLY_OBSERVER_MODEL_NAME",
+    "MYALLY_SEARCH_ENDPOINT",
+    "MYALLY_SEARCH_API_KEY"
+  ]
+}

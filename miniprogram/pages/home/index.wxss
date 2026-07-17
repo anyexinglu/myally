@@ -2,8 +2,9 @@
 .chat-head { align-items: center; display: flex; height: 124rpx; justify-content: space-between; padding: 18rpx 42rpx 10rpx; }
 .brand { color: #202725; display: block; font-size: 39rpx; font-weight: 760; letter-spacing: -1rpx; }
 .brand-subtitle { color: #a0aaa7; display: block; font-size: 15rpx; font-weight: 650; letter-spacing: 3rpx; margin-top: 4rpx; }
-.presence { align-items: center; background: #e9fbf4; border-radius: 50%; color: #49cfa3; display: flex; height: 70rpx; justify-content: center; width: 70rpx; }
-.sun { font-size: 38rpx; transform: rotate(18deg); }
+.mode-control { align-items: center; color: #75827e; display: flex; font-size: 22rpx; gap: 8rpx; }
+.mode-switch { transform: scale(.76); transform-origin: right center; }
+.temporary-banner { background: #fff7e8; border: 1rpx solid #f4dfb8; border-radius: 16rpx; color: #8a6932; font-size: 21rpx; margin: -4rpx 40rpx 4rpx; padding: 14rpx 20rpx; text-align: center; }
 .message-list { height: calc(100vh - 212rpx); }
 .day-label { color: #b6bfbc; font-size: 21rpx; margin: 38rpx 0 46rpx; text-align: center; }
 .message-row { align-items: flex-start; display: flex; gap: 18rpx; margin: 0 40rpx 40rpx; }
@@ -16,6 +17,7 @@
 .message-text { display: block; word-break: break-all; }
 .message-image { border-radius: 18rpx; display: block; height: 280rpx; margin-bottom: 12rpx; width: 360rpx; }
 .memory-note { color: #b1bab7; font-size: 20rpx; line-height: 1.5; margin-top: 6rpx; }
+.warning-note { color: #b07c40; }
 .sending-mark { color: rgba(255,255,255,.72); font-size: 19rpx; margin-top: 7rpx; }
 .failed-mark { color: #cc6b62; font-size: 20rpx; margin-top: 7rpx; text-align: right; }
 .thinking-row { align-items: center; display: flex; gap: 18rpx; margin: 0 40rpx 30rpx; }

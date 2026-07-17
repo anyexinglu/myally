@@ -12,7 +12,12 @@ const required = [
   'cloudfunctions/entries/index.js', 'cloudfunctions/entries/domain.js',
   'packages/domain/index.js',
   'cloudfunctions/conversations/index.js', 'cloudfunctions/conversations/domain.js',
-  'cloudfunctions/conversations/model-adapter.js', 'packages/conversation/index.js',
+  'cloudfunctions/conversations/model-adapter.js', 'cloudfunctions/conversations/search-adapter.js',
+  'cloudfunctions/conversations/agent.js', 'cloudfunctions/conversations/memory.js',
+  'cloudfunctions/conversations/skills.js', 'cloudfunctions/conversations/tools.js',
+  'packages/conversation/index.js', 'packages/agent/index.js', 'packages/memory/index.js',
+  'packages/skills/index.js', 'packages/tools/index.js',
+  'cloudbase/schema.json', 'scripts/cloudbase-readiness.js',
 ];
 
 for (const file of required) {
@@ -21,7 +26,7 @@ for (const file of required) {
   if (fs.readFileSync(full, 'utf8').includes('...[truncated]')) throw new Error(`truncated marker found: ${file}`);
 }
 
-for (const file of ['project.config.json', 'project.config.example.json', 'miniprogram/app.json', 'miniprogram/sitemap.json', 'cloudfunctions/entries/package.json', 'cloudfunctions/conversations/package.json']) {
+for (const file of ['project.config.json', 'project.config.example.json', 'miniprogram/app.json', 'miniprogram/sitemap.json', 'cloudfunctions/entries/package.json', 'cloudfunctions/conversations/package.json', 'cloudbase/schema.json']) {
   JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'));
 }
 
@@ -45,11 +50,25 @@ if (domain !== cloudDomain) throw new Error('cloud function domain copy is out o
 const conversationDomain = fs.readFileSync(path.join(root, 'packages/conversation/index.js'), 'utf8');
 const cloudConversationDomain = fs.readFileSync(path.join(root, 'cloudfunctions/conversations/domain.js'), 'utf8');
 if (conversationDomain !== cloudConversationDomain) throw new Error('conversation cloud function domain copy is out of sync');
+for (const [source, deployed] of [
+  ['packages/agent/index.js', 'cloudfunctions/conversations/agent.js'],
+  ['packages/memory/index.js', 'cloudfunctions/conversations/memory.js'],
+  ['packages/skills/index.js', 'cloudfunctions/conversations/skills.js'],
+  ['packages/tools/index.js', 'cloudfunctions/conversations/tools.js'],
+]) {
+  if (fs.readFileSync(path.join(root, source), 'utf8') !== fs.readFileSync(path.join(root, deployed), 'utf8')) {
+    throw new Error(`cloud function domain copy is out of sync: ${deployed}`);
+  }
+}
 
 for (const file of [
   'packages/domain/index.js', 'cloudfunctions/entries/domain.js', 'cloudfunctions/entries/index.js',
   'packages/conversation/index.js', 'cloudfunctions/conversations/domain.js',
   'cloudfunctions/conversations/model-adapter.js', 'cloudfunctions/conversations/index.js',
+  'cloudfunctions/conversations/search-adapter.js',
+  'cloudfunctions/conversations/agent.js', 'cloudfunctions/conversations/memory.js',
+  'cloudfunctions/conversations/skills.js', 'cloudfunctions/conversations/tools.js',
+  'packages/agent/index.js', 'packages/memory/index.js', 'packages/skills/index.js', 'packages/tools/index.js',
 ]) {
   new vm.Script(fs.readFileSync(path.join(root, file), 'utf8'), { filename: file });
 }

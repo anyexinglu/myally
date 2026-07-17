@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const {
   ConversationService, InMemoryMessageRepository, ValidationError,
 } = require('../packages/conversation');
-const { toModelMessages } = require('../cloudfunctions/conversations/model-adapter');
+const { toModelMessages, parseAgentEnvelope } = require('../cloudfunctions/conversations/model-adapter');
 
 function fixture(modelGenerate) {
   let id = 0;
@@ -81,4 +81,11 @@ test('invalid text and missing image file are rejected', async () => {
   const { service } = fixture();
   await assert.rejects(() => service.send('alice', { type: 'text', text: '', requestId: 'r1' }), ValidationError);
   await assert.rejects(() => service.send('alice', { type: 'image', requestId: 'r2' }), ValidationError);
+});
+
+test('agent envelope accepts strict JSON and degrades plain model text to a final answer', () => {
+  assert.deepEqual(parseAgentEnvelope('{"type":"tool","toolName":"current_time","arguments":{}}'), {
+    type: 'tool', toolName: 'current_time', arguments: {},
+  });
+  assert.deepEqual(parseAgentEnvelope('直接回答'), { type: 'final', text: '直接回答' });
 });

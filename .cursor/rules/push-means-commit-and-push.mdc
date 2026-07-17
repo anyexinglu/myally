@@ -1,0 +1,15 @@
+---
+description: When user says push, commit workspace then push
+alwaysApply: true
+---
+
+# Push = Commit + Push
+
+When the user says **push** (or equivalent: 「push」「推一下」「提交并推送」):
+
+1. Treat it as an explicit request to **commit all relevant workspace changes** and then **push** to the remote.
+2. Follow the standard git commit workflow (status, diff, log → stage → commit with HEREDOC message → verify).
+3. Then push the current branch (`git push -u origin HEAD` if upstream is missing, otherwise `git push`).
+4. Do **not** ask for extra confirmation that commit is allowed — “push” already includes commit permission.
+5. Still refuse secrets (`.env`, credentials, tokens). Warn and exclude them if present.
+6. If there is nothing to commit, still push any unpushed commits; if nothing to push either, say so briefly.
