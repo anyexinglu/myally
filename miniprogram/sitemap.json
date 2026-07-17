@@ -1,0 +1,6 @@
+{
+  "desc": "POC页面不参与搜索",
+  "rules": [
+    { "action": "disallow", "page": "*" }
+  ]
+}

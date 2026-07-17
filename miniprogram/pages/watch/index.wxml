@@ -1,0 +1,18 @@
+<view class="container">
+  <view class="hero compact">
+    <view class="hero-title">守望</view>
+    <text class="hero-sub">照护者只看到本人主动共享的最小摘要。</text>
+  </view>
+  <view wx:if="{{loading}}" class="card hint">加载中…</view>
+  <view wx:if="{{denied}}" class="card">
+    <view class="section-title">当前账号不是照护者</view>
+    <text class="hint">照护者身份只由云函数环境变量ADMIN_OPENIDS配置，前端不能自行开启。</text>
+  </view>
+  <view wx:if="{{error}}" class="card error">{{error}}</view>
+  <view wx:if="{{!loading && !denied && !error && entries.length === 0}}" class="card hint">暂无授权摘要</view>
+  <view class="card" wx:for="{{entries}}" wx:key="id">
+    <view class="row between"><text class="tag">{{item.type}}</text><text class="hint">来自 {{item.ownerId}}</text></view>
+    <text class="summary">{{item.summary}}</text>
+    <text class="hint">{{item.createdAt}}</text>
+  </view>
+</view>

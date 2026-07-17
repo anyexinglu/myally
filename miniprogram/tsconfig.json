@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "strict": false,
+    "target": "ES2020",
+    "module": "CommonJS",
+    "types": ["miniprogram-api-typings"],
+    "allowJs": true,
+    "noImplicitAny": false,
+    "useUnknownInCatchVariables": false,
+    "skipLibCheck": true
+  },
+  "include": ["**/*.ts"]
+}

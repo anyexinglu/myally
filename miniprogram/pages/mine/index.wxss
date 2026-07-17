@@ -1,0 +1,7 @@
+.compact { padding: 30rpx; }
+.between { justify-content: space-between; }
+.content, .summary { display: block; margin-top: 20rpx; line-height: 1.65; }
+.summary { color: #49655b; background: #f0f5f3; border-radius: 16rpx; padding: 16rpx; }
+.media { width: 100%; height: 300rpx; border-radius: 18rpx; margin-top: 20rpx; }
+.mini { margin-top: 18rpx; font-size: 25rpx; }
+.danger { color: #a33b3b !important; background: #fff0f0 !important; }

@@ -1,0 +1,44 @@
+<view class="container">
+  <view class="hero">
+    <view class="hero-title">有我 <text class="brand-en">MyAlly</text></view>
+    <text class="hero-sub">懂你所想，帮你做到 · AI全能分身助理</text>
+  </view>
+
+  <view class="card">
+    <view class="section-title">选择输入方式</view>
+    <view class="row">
+      <view class="mode {{type === 'text' ? 'active' : ''}}" data-type="text" bindtap="selectType">文字</view>
+      <view class="mode {{type === 'voice' ? 'active' : ''}}" data-type="voice" bindtap="selectType">语音</view>
+      <view class="mode {{type === 'image' ? 'active' : ''}}" data-type="image" bindtap="selectType">图片</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <textarea wx:if="{{type === 'text'}}" class="textarea" maxlength="2000" placeholder="记录今天发生的事、感受或想法" value="{{text}}" bindinput="onText" />
+    <view wx:elif="{{type === 'voice'}}">
+      <button class="secondary" bindtap="toggleRecording">{{recording ? '停止录音' : '开始录音'}}</button>
+      <text class="hint">{{tempFilePath ? '录音已就绪' : '最长60秒，保存后上传到你的私有空间'}}</text>
+    </view>
+    <view wx:else>
+      <button class="secondary" bindtap="chooseImage">拍照或选图</button>
+      <image wx:if="{{tempFilePath}}" class="preview" src="{{tempFilePath}}" mode="aspectFill" />
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="row between">
+      <view>
+        <view class="section-title small">给守望照护者看摘要</view>
+        <text class="hint">默认私密；打开后也不分享原文、录音或图片</text>
+      </view>
+      <switch color="#2e6b57" checked="{{shared}}" bindchange="onShared" />
+    </view>
+    <input wx:if="{{shared}}" class="input" maxlength="120" placeholder="写一条照护者可见摘要" value="{{summary}}" bindinput="onSummary" />
+  </view>
+
+  <button class="primary" loading="{{saving}}" bindtap="save">保存这条记录</button>
+  <view class="row links">
+    <button class="link" bindtap="goMine">我的记录</button>
+    <button class="link" bindtap="goWatch">守望列表</button>
+  </view>
+</view>

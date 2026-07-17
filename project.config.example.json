@@ -1,0 +1,20 @@
+{
+  "description": "有我 MyAlly AI全能分身助理 POC",
+  "packOptions": { "ignore": [] },
+  "setting": {
+    "urlCheck": true,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "compileHotReLoad": true,
+    "useCompilerPlugins": ["typescript"]
+  },
+  "compileType": "miniprogram",
+  "libVersion": "trial",
+  "appid": "touristappid",
+  "projectname": "myally-miniapp-poc",
+  "miniprogramRoot": "miniprogram/",
+  "cloudfunctionRoot": "cloudfunctions/",
+  "condition": {}
+}

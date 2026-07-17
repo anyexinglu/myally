@@ -1,0 +1,20 @@
+<view class="container">
+  <view class="hero compact">
+    <view class="hero-title">我的记录</view>
+    <text class="hero-sub">只有你能查看原始内容；共享状态只开放摘要。</text>
+  </view>
+  <view wx:if="{{loading}}" class="card hint">加载中…</view>
+  <view wx:if="{{error}}" class="card error">{{error}}</view>
+  <view wx:if="{{!loading && !error && entries.length === 0}}" class="card hint">还没有记录</view>
+  <view class="card" wx:for="{{entries}}" wx:key="id">
+    <view class="row between">
+      <text class="tag">{{item.type}}</text>
+      <text class="hint">{{item.visibility === 'shared' ? '已共享摘要' : '仅自己'}}</text>
+    </view>
+    <text wx:if="{{item.type === 'text'}}" class="content">{{item.text}}</text>
+    <image wx:elif="{{item.type === 'image'}}" class="media" src="{{item.fileId}}" mode="aspectFill" />
+    <button wx:else class="secondary mini" data-file="{{item.fileId}}" bindtap="play">播放语音</button>
+    <text wx:if="{{item.summary}}" class="summary">共享摘要：{{item.summary}}</text>
+    <button class="danger mini" data-id="{{item.id}}" bindtap="remove">删除</button>
+  </view>
+</view>
