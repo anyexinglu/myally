@@ -1153,8 +1153,8 @@ POC只实现支撑AI闭环的最小服务端能力：
 - POC-1A本地测试：12个领域测试、结构检查和TypeScript检查通过。
 - OpenSpec 1.6.0初始化及`hermes-lite-agent-memory-poc` proposal、design、四类规格和tasks；
 - POC-1B代码链路：Agent Orchestrator、三类Skill、白名单工具、Policy Engine、LLM Observer、相关记忆、临时模式、记忆中心和删除；
-- POC-1B本地验证：32个测试、26个必需文件与部署副本检查、TypeScript检查和Hermes-lite演示通过；新增工具参数Schema、相关性过滤、末步工具预算、显式纠正记忆时间线、fast/reasoner/multimodal/observer模型路由及关键OpenSpec契约覆盖；CloudBase schema清单、无凭证就绪检查和双云函数部署脚本已完成。
-- 正式AppID前端预览构建：微信开发者工具重新编译为0个问题，CLI成功生成43.2KB预览包和二维码。
+- POC-1B本地验证：33个测试、26个必需文件与部署副本检查、TypeScript检查和Hermes-lite演示通过；新增实际部署云函数入口＋仿CloudBase SDK集成测试、工具参数Schema、相关性过滤、末步工具预算、显式纠正记忆时间线、fast/reasoner/multimodal/observer模型路由及关键OpenSpec契约覆盖；CloudBase schema清单、无凭证就绪检查和双云函数部署脚本已完成。2026-07-17按CloudBase最新官方文档复核`wx-server-sdk 4.0.2`调用形态，基础冒烟默认改为成长计划可用的`hy3`，并将`messages(ownerId, requestId, role)`固化为唯一索引，收费/专用模型仍须显式启用。
+- 正式AppID前端预览构建：微信开发者工具CLI成功生成包含失败原位重试的45.5KB预览包和二维码；二维码仍未成功扫码，不计真机验收。
 
 ### 未完成
 

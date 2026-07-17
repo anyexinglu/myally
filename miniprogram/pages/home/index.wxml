@@ -20,7 +20,10 @@
             <text wx:if="{{item.text}}" class="message-text">{{item.text}}</text>
             <view wx:if="{{item.pending}}" class="sending-mark">发送中…</view>
           </view>
-          <text wx:if="{{item.failed}}" class="failed-mark">发送失败</text>
+          <view wx:if="{{item.failed}}" class="failed-actions">
+            <text class="failed-mark">发送失败</text>
+            <text class="retry-link" data-id="{{item.id}}" bindtap="retrySend">重试</text>
+          </view>
           <text wx:elif="{{item.role === 'assistant' && item.memoryCount}}" class="memory-note">使用了 {{item.memoryCount}} 条个人记忆</text>
           <text wx:elif="{{item.role === 'assistant' && item.memoryStatus === 'failed'}}" class="memory-note warning-note">本次记忆整理失败，不影响当前回答</text>
           <text wx:elif="{{item.role === 'assistant' && item.toolCalls.length}}" class="memory-note">已使用受控工具完成核验</text>

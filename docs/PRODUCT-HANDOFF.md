@@ -1,6 +1,6 @@
 # 我在 MyAlly｜个人AI助理产品与研发交接文档
 
-> 状态：持续更新。最近整理：2026-07-17。主计划已升级为v3.2。
+> 状态：持续更新。最近整理：2026-07-18。主计划已升级为v3.2。
 > 用途：保存主计划之外仍会影响后续决策的讨论结论、依据、取舍与待验证项，保证任何 Agent 不依赖聊天记录即可接手。
 
 ## 0. 2026-07-17 POC-1A 实现快照
@@ -23,9 +23,10 @@
 - 每条消息记录来源，只有`user_message`标为可进入后续Memory Observer，`assistant_generation`永不反向成为用户事实；
 - 图片只由服务端把云存储`fileId`换成临时URL，再按OpenAI兼容的`image_url + text`多模态结构提交；
 - `requestId`支持顺序幂等；模型失败时保留已记录的用户消息，使用相同请求重试不会重复落用户消息；
+- 小程序失败气泡提供原位重试，沿用原`requestId`和已完成的图片上传，真正把服务端幂等能力暴露给微信用户；
 - 本阶段不写Profile Item、不检索个人画像、不把“保存对话”宣传成“长期记忆”。
 
-CloudBase官方文档确认`cloud.ai().createModel(...).generateText(...)`支持服务端模型调用，多模态消息使用数组内容块；本实现默认使用`cloudbase / glm-5v-turbo`，部署时可通过环境变量替换。参考：<https://docs.cloudbase.net/api-reference/server/node-sdk/ai>、<https://docs.cloudbase.net/ai/model/multimodal>。
+CloudBase官方文档确认`wx-server-sdk 4.0.2`支持在微信云函数中使用`cloud.ai().createModel(...).generateText(...)`，返回`text/usage/messages`；现有调用形态与官方接口一致。2026-07-17再次核验时，成长计划体验模型仅提供`hy3`，其他DeepSeek、GLM、Kimi、MiniMax、Qwen等模型需要当前环境的资源点套餐和模型开关。因此代码基础默认改为`cloudbase / hy3`以降低首次真实冒烟门槛，fast/reasoner/multimodal/observer仍须按控制台已启用模型显式配置，不静默启用收费模型。参考：<https://docs.cloudbase.net/ai/model/wx-server-sdk-access>、<https://docs.cloudbase.net/ai/model/overview>、<https://docs.cloudbase.net/ai/CHANGELOG>。
 
 **验证边界：**本地12个领域测试、结构检查、TypeScript检查和官方`wcsc`样式编译检查已通过。开发者工具模拟器可加载新WXML，但本机`WeappVendor 3.16.2`校验错误与路由超时导致页面WXSS未可靠挂载，不能计为视觉验收通过；正式AppID、`messages`集合、AI+模型开关、云函数部署、真机视觉和真实模型返回也尚未完成。因此状态是“代码POC”，不是“CloudBase已集成”或“端到端已完成”。
 
@@ -79,9 +80,13 @@ CloudBase官方文档确认`cloud.ai().createModel(...).generateText(...)`支持
 - 首页新增临时对话及记忆/工具状态；“我的空间”新增记忆中心和删除；
 - Fake Model演示跑通两轮记忆改变回答、`current_time`工具、临时模式、删除和双账号隔离。
 
-本地实测：32/32测试、26个必需文件结构/部署副本检查、TypeScript检查、两个演示流程和OpenSpec严格校验通过。契约测试新增工具参数Schema拒绝、零相关记忆过滤、末步工具不执行、同conversation双账号隔离、只读Skill、搜索不可用降级、推断记忆不召回、显式纠正时间线及fast/reasoner/multimodal/observer模型路由。Skill升级到v1.1，强化结论、现实约束、取舍、备选和最小下一步；专用模型未配置时继续回退单一基础模型。微信开发者工具Stable 2.01.2510290已使用正式AppID重新编译新UI，构建面板为0个问题，CLI成功生成43.2KB预览包和二维码。`cloudbase/schema.json`与`npm run cloud:check/cloud:deploy`已固化集合、索引和无密钥部署流程。
+本地实测：33/33测试、26个必需文件结构/部署副本检查、TypeScript检查、两个演示流程和OpenSpec严格校验通过。其中新增测试以纯内存仿CloudBase SDK加载实际部署云函数入口，覆盖可信OPENID、用户消息先落库、模型回复、Observation/Profile Item、第二轮记忆注入和跨账号隔离；它是部署前集成证据，不冒充真实CloudBase。其他契约覆盖工具参数Schema拒绝、零相关记忆过滤、末步工具不执行、只读Skill、搜索不可用降级、推断记忆不召回、显式纠正时间线及fast/reasoner/multimodal/observer模型路由。Skill升级到v1.1，强化结论、现实约束、取舍、备选和最小下一步；专用模型未配置时继续回退单一基础模型。小程序失败气泡已支持复用原requestId和已上传图片原位重试。微信开发者工具Stable 2.01.2510290已使用正式AppID成功生成包含该改动的45.5KB预览包和二维码。`cloudbase/schema.json`与`npm run cloud:check/cloud:deploy`已固化集合、索引和无密钥部署流程。
 
-真实部署检查发现，该AppID在开发者工具本地状态中仍为`cloudProject: false`，CloudBase环境数量为0；CLI查询环境同时返回微信侧`system error`。项目管理员已尝试开通，但当前扫码失败，明确保留为待补充，不阻塞其余本地研发。因此目前只能证明**POC-1B代码、本地闭环和前端预览构建完成**。CloudBase开通/绑定、集合与索引、AI+模型、云函数部署、数据库落库、真机真实回复和双账号端测仍未完成，不能称为“微信可真实对话已完成”。下一位Agent不得猜测环境ID；平台恢复后再继续OpenSpec任务7.1—7.5。
+真实部署检查发现，该AppID在开发者工具本地状态中仍为`cloudProject: false`，CloudBase环境数量为0；CLI查询环境同时返回微信侧`system error`。2026-07-18项目管理员提供了一个确实存在的腾讯云CloudBase环境，因此无需再购买19.9元套餐；但直接指定该环境执行部署时，微信CLI仍在查询函数和环境列表阶段返回`system error`，说明“腾讯云环境已存在”不等于“当前微信小程序已关联并获权访问”。同时，从当前项目的`conversations`目录执行“创建并部署”时，自动打开的是另一个名为“失物交接”的小程序云控制台。两个AppID不一致，因此本轮没有在错误环境创建函数、集合或测试数据。
+
+因此目前只能证明**POC-1B代码、本地闭环和前端预览构建完成**。要继续真实链路，必须使用微信云开发控制台的“账号绑定/关联已有腾讯云账号”路径，把当前MYALLY正式AppID关联到现有环境，并确保开发者工具登录账号对两侧都有管理员权限；随后重新打开项目，右键云函数时应进入当前项目控制台且能看到环境列表。完成该绑定后再按`cloudbase/schema.json`创建四个集合与索引、部署函数并进行真实对话。AI+模型、数据库落库、真机真实回复和双账号端测仍未完成，不能称为“微信可真实对话已完成”。下一位Agent不得猜测环境ID、复用其他小程序环境或在AppID不一致时继续部署；之后继续OpenSpec任务7.1—7.5。
+
+部署前并发审计补充：`messages`必须按`ownerId + requestId + role`建立唯一索引，才能阻止网络并发重试产生同一轮重复消息；当前环境尚无真实数据，可直接按新版`cloudbase/schema.json`创建，无需处理旧数据冲突。`npm run cloud:check`现会列出`cloudbase / hy3`基础默认值和全部必建唯一索引。
 
 ## 1. 当前已确认定位
 

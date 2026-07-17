@@ -15,10 +15,28 @@ function fail(message) {
   process.exit(1);
 }
 
+function stripAnsi(value) {
+  return String(value || '').replace(/\u001b\[[0-9;]*m/g, '');
+}
+
 function run(command, args) {
-  const result = spawnSync(command, args, { cwd: root, stdio: 'inherit', shell: false });
+  const result = spawnSync(command, args, {
+    cwd: root,
+    encoding: 'utf8',
+    shell: false,
+  });
+  if (result.stdout) process.stdout.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
   if (result.error) fail(result.error.message);
   if (result.status !== 0) fail(`${path.basename(command)} exited with ${result.status}`);
+
+  // The WeChat CLI can exit with status 0 even when its internal CloudBase
+  // request failed. Treat those platform markers as deployment failures so a
+  // later agent never records a false successful deployment.
+  const output = stripAnsi(`${result.stdout || ''}\n${result.stderr || ''}`);
+  if (/(?:^|\n)\s*(?:✖|\[error\])|Base resp abnormal/.test(output)) {
+    fail(`${path.basename(command)} reported a CloudBase platform error`);
+  }
 }
 
 if (!fs.existsSync(cli)) fail('WeChat developer tools CLI is unavailable');
@@ -32,6 +50,10 @@ const summary = {
   schemaVersion: manifest.version,
   collections: manifest.collections.map((item) => item.name),
   cloudFunctions: manifest.cloudFunctions,
+  conversationDefaults: manifest.conversationDefaults,
+  requiredUniqueIndexes: manifest.collections.flatMap((collection) => collection.indexes
+    .filter((index) => index.unique)
+    .map((index) => `${collection.name}.${index.name}`)),
   developerToolsCli: true,
   cloudbaseEnvironmentConfigured: Boolean(envId),
   next: envId

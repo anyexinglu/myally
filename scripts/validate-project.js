@@ -78,4 +78,11 @@ for (const page of ['pages/home/index', 'pages/mine/index', 'pages/watch/index']
   if (!app.pages.includes(page)) throw new Error(`page not registered: ${page}`);
 }
 
+const homeLogic = fs.readFileSync(path.join(root, 'miniprogram/pages/home/index.ts'), 'utf8');
+const homeTemplate = fs.readFileSync(path.join(root, 'miniprogram/pages/home/index.wxml'), 'utf8');
+if (!homeLogic.includes('retrySend(event)') || !homeLogic.includes('requestId: draft.requestId')) {
+  throw new Error('failed conversation retry must preserve the original requestId');
+}
+if (!homeTemplate.includes('bindtap="retrySend"')) throw new Error('failed conversation retry control is missing');
+
 console.log(`project validation passed: ${required.length} required files, ${app.pages.length} pages`);

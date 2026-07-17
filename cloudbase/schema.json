@@ -15,7 +15,7 @@
       "clientAccess": "deny",
       "indexes": [
         { "name": "owner_conversation_created", "unique": false, "fields": [{ "name": "ownerId", "direction": "asc" }, { "name": "conversationId", "direction": "asc" }, { "name": "createdAt", "direction": "asc" }] },
-        { "name": "owner_request", "unique": false, "fields": [{ "name": "ownerId", "direction": "asc" }, { "name": "requestId", "direction": "asc" }] },
+        { "name": "owner_request_role", "unique": true, "fields": [{ "name": "ownerId", "direction": "asc" }, { "name": "requestId", "direction": "asc" }, { "name": "role", "direction": "asc" }] },
         { "name": "message_id", "unique": true, "fields": [{ "name": "id", "direction": "asc" }] }
       ]
     },
@@ -38,6 +38,10 @@
     }
   ],
   "cloudFunctions": ["entries", "conversations"],
+  "conversationDefaults": {
+    "provider": "cloudbase",
+    "model": "hy3"
+  },
   "requiredConversationEnvironment": [
     "MYALLY_MODEL_PROVIDER",
     "MYALLY_MODEL_NAME"

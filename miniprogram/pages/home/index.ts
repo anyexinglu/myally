@@ -53,6 +53,7 @@ Page({
     } catch (_) {}
   },
   async toggleTemporary() {
+    if (this.data.sending) return;
     const temporary = !this.data.temporary;
     if (temporary) {
       this.setData({ temporary: true, conversationId: '', messages: [TEMP_WELCOME], anchor: 'message-temp-welcome' });
@@ -75,28 +76,53 @@ Page({
     const localImage = this.data.selectedImage;
     if (!text && !localImage) return;
     const id = requestId();
-    const optimistic = {
+    const draft = {
       id: `local-${id}`, role: 'user', type: localImage ? 'image' : 'text',
-      text, fileId: localImage, createdAt: '刚刚', pending: true,
+      text, fileId: localImage, localImage, uploadedFileId: '', requestId: id,
+      conversationId: this.data.conversationId, temporary: this.data.temporary,
+      createdAt: '刚刚', pending: true, failed: false,
     };
-    const messages = [...this.data.messages, optimistic];
-    this.setData({ messages, text: '', selectedImage: '', sending: true, anchor: `message-${optimistic.id}` });
+    const messages = [...this.data.messages, draft];
+    this.setData({ messages, text: '', selectedImage: '', sending: true, anchor: `message-${draft.id}` });
+    await this.deliverDraft(draft, messages);
+  },
+  async retrySend(event) {
+    if (this.data.sending) return;
+    const id = event.currentTarget.dataset.id;
+    const draft = this.data.messages.find((item) => item.id === id && item.failed);
+    if (!draft) return;
+    if (!!draft.temporary !== !!this.data.temporary) {
+      wx.showToast({ title: '请先切回原对话模式再重试', icon: 'none' });
+      return;
+    }
+    const messages = this.data.messages.map((item) => item.id === id ? { ...item, pending: true, failed: false } : item);
+    const pendingDraft = messages.find((item) => item.id === id);
+    this.setData({ messages, sending: true, anchor: `message-${id}` });
+    await this.deliverDraft(pendingDraft, messages);
+  },
+  async deliverDraft(draft, messages) {
+    let uploadedFileId = draft.uploadedFileId || '';
     try {
-      const fileId = localImage ? await uploadInputFile(localImage, 'image') : '';
+      if (!uploadedFileId && draft.localImage) uploadedFileId = await uploadInputFile(draft.localImage, 'image');
       const turn = await callConversation('send', { payload: {
-        requestId: id, conversationId: this.data.conversationId,
-        type: localImage ? 'image' : 'text', text, fileId, temporary: this.data.temporary,
+        requestId: draft.requestId, conversationId: draft.conversationId,
+        type: draft.type, text: draft.text, fileId: uploadedFileId, temporary: draft.temporary,
       } }) as any;
       const assistant = decorate({
         ...turn.assistantMessage,
         memoryCount: (turn.usedMemories || []).length,
         memoryStatus: turn.memoryStatus,
       });
-      const next = [...messages.slice(0, -1), decorate(turn.userMessage), assistant];
-      if (!this.data.temporary) wx.setStorageSync('myallyConversationId', turn.conversationId);
+      const next = messages.flatMap((item) => item.id === draft.id
+        ? [decorate(turn.userMessage), assistant]
+        : [item]);
+      if (!draft.temporary) wx.setStorageSync('myallyConversationId', turn.conversationId);
       this.setData({ messages: next, conversationId: turn.conversationId, anchor: `message-${turn.assistantMessage.id}` });
     } catch (error) {
-      this.setData({ messages: [...messages.slice(0, -1), { ...optimistic, pending: false, failed: true }] });
+      const failed = messages.map((item) => item.id === draft.id
+        ? { ...item, uploadedFileId, pending: false, failed: true }
+        : item);
+      this.setData({ messages: failed, anchor: `message-${draft.id}` });
       wx.showToast({ title: error.message || '发送失败，请稍后再试', icon: 'none' });
     } finally {
       this.setData({ sending: false });

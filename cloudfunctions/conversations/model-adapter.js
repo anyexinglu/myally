@@ -40,7 +40,7 @@ function toModelMessages(history, currentMessageId, imageUrl) {
 
 class CloudBaseModelAdapter {
   constructor({
-    ai, provider = 'cloudbase', modelName = 'glm-5v-turbo', fastModelName = '',
+    ai, provider = 'cloudbase', modelName = 'hy3', fastModelName = '',
     reasonerModelName = '', multimodalModelName = '', observerModelName = '',
   }) {
     this.model = ai.createModel(provider);

@@ -22,7 +22,9 @@
 .memory-note { color: #b1bab7; font-size: 20rpx; line-height: 1.5; margin-top: 6rpx; }
 .warning-note { color: #b07c40; }
 .sending-mark { color: rgba(255,255,255,.72); font-size: 19rpx; margin-top: 7rpx; }
-.failed-mark { color: #cc6b62; font-size: 20rpx; margin-top: 7rpx; text-align: right; }
+.failed-actions { align-items: center; display: flex; gap: 18rpx; justify-content: flex-end; margin-top: 7rpx; }
+.failed-mark { color: #cc6b62; font-size: 20rpx; }
+.retry-link { color: #299b78; font-size: 20rpx; font-weight: 650; }
 .thinking-row { align-items: center; display: flex; gap: 18rpx; margin: 0 40rpx 30rpx; }
 .small-avatar { flex-basis: 52rpx; font-size: 20rpx; height: 52rpx; width: 52rpx; }
 .thinking { align-items: center; display: flex; gap: 8rpx; padding: 14rpx 0; }
