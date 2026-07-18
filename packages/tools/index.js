@@ -57,7 +57,7 @@ class PolicyEngine {
   }
 }
 
-function createCoreTools({ memoryService, searchAdapter, now = () => new Date(), timezone = 'Asia/Shanghai' } = {}) {
+function createCoreTools({ memoryService, searchAdapter, taskService, now = () => new Date(), timezone = 'Asia/Shanghai' } = {}) {
   return [
     {
       name: 'current_time', description: '读取服务端当前时间', readOnly: true,
@@ -88,6 +88,29 @@ function createCoreTools({ memoryService, searchAdapter, now = () => new Date(),
         } catch (_) {
           return { status: 'unavailable', reason: 'realtime search failed' };
         }
+      },
+    },
+    {
+      name: 'create_task', description: '创建一条待办任务/提醒，用于用户在后续需要跟进的行动', readOnly: true,
+      inputSchema: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', minLength: 1, maxLength: 200, description: '任务标题' },
+          description: { type: 'string', maxLength: 1000, description: '任务描述（可选）' },
+          dueAt: { type: 'string', maxLength: 50, description: '截止时间 ISO 字符串（可选）' },
+        },
+        required: ['title'], additionalProperties: false,
+      },
+      execute: async (args, context) => {
+        if (!taskService) return { status: 'unavailable', reason: 'task service is not configured' };
+        if (!context.ownerId) return { status: 'unavailable', reason: 'owner identity is required' };
+        const task = await taskService.create(context.ownerId, {
+          title: String(args.title || '').trim(),
+          description: String(args.description || '').trim(),
+          dueAt: args.dueAt || undefined,
+          sourceMessageId: context.inputText ? `from:${context.inputText.slice(0, 50)}` : undefined,
+        });
+        return { status: 'ok', task: { id: task.id, title: task.title, status: task.status } };
       },
     },
   ];
