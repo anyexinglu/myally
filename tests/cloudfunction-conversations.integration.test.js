@@ -36,6 +36,16 @@ class FakeQuery {
     }
     return { stats: { updated } };
   }
+
+  async remove() {
+    let removed = 0;
+    for (let index = this.items.length - 1; index >= 0; index -= 1) {
+      if (!this.matches(this.items[index])) continue;
+      this.items.splice(index, 1);
+      removed += 1;
+    }
+    return { stats: { removed } };
+  }
 }
 
 class FakeCollection {
@@ -60,6 +70,11 @@ function loadCloudFunction({ missingCollections = [] } = {}) {
     DYNAMIC_CURRENT_ENV: Symbol('dynamic-current-env'),
     init() {},
     getWXContext() { return { OPENID: state.ownerId }; },
+    openapi: {
+      security: {
+        async msgSecCheck() { return { result: { suggest: 'pass', label: 100 } }; },
+      },
+    },
     database() {
       return {
         collection(name) {
@@ -155,6 +170,27 @@ test('deployed conversations entry persists, calls the LLM, remembers, and isola
   assert.deepEqual(otherOwnerList, { ok: true, data: [] });
   const otherOwnerMemories = await main({ action: 'listMemories' });
   assert.deepEqual(otherOwnerMemories, { ok: true, data: [] });
+
+  const deleteOther = await main({ action: 'deleteConversation', conversationId: first.data.conversationId });
+  assert.deepEqual(deleteOther, { ok: true, data: 0 });
+
+  state.ownerId = 'owner-a';
+  const deleted = await main({ action: 'deleteConversation', conversationId: first.data.conversationId });
+  assert.deepEqual(deleted, { ok: true, data: 4 });
+  assert.deepEqual(await main({ action: 'list', conversationId: first.data.conversationId }), { ok: true, data: [] });
+});
+
+test('client raw mode cannot bypass the production conversation pipeline', async () => {
+  const { main, state } = loadCloudFunction();
+  const result = await main({
+    action: 'send', mode: 'raw',
+    payload: { type: 'text', text: '仍应走正式管线', requestId: 'raw-bypass-attempt' },
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(state.collections.messages.length, 2);
+  assert.ok(result.data.conversationId);
+  assert.equal(result.data.memoryStatus, 'completed');
 });
 
 test('deployed conversations entry reports setup required without claiming an unsaved message was recorded', async () => {

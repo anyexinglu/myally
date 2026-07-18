@@ -20,7 +20,7 @@ const fs = require('node:fs');
 
 const PROJECT_PATH = path.resolve(__dirname, '../..');
 const SCENARIOS_DIR = path.join(__dirname, 'scenarios');
-const WS_PORT = '58002';
+const WS_PORT = '9420';
 
 function loadScenario(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));

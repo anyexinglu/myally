@@ -7,13 +7,14 @@ if (typeof globalThis.structuredClone !== 'function') {
 }
 
 const cloud = require('wx-server-sdk');
-const { ConversationService, ValidationError } = require('./domain');
+const { ConversationService, ValidationError, ContentSafetyError } = require('./domain');
 const { CloudBaseModelAdapter } = require('./model-adapter');
 const { AgentOrchestrator } = require('./agent');
 const { MemoryService, MemoryObserver, MemoryValidationError } = require('./memory');
 const { SkillRegistry, CapabilityRouter } = require('./skills');
 const { ToolRegistry, PolicyEngine, createCoreTools } = require('./tools');
 const { HttpSearchAdapter } = require('./search-adapter');
+const { WechatContentModerator } = require('./content-safety');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV, timeout: 60000 });
 const database = cloud.database();
@@ -37,6 +38,10 @@ class CloudBaseMessageRepository {
     return result.data
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id))
       .slice(-limit);
+  }
+  async deleteConversation(ownerId, conversationId) {
+    const result = await collection.where({ ownerId, conversationId }).remove();
+    return result.stats ? result.stats.removed : 0;
   }
 }
 
@@ -102,12 +107,19 @@ function makeService() {
   return new ConversationService({
     repository: new CloudBaseMessageRepository(),
     model, agent, memoryService, observer,
+    contentModerator: new WechatContentModerator({ openapi: cloud.openapi }),
     imageUrlResolver: resolveImageUrl,
     idFactory: () => `${Date.now()}-${Math.random().toString(36).slice(2, 12)}`,
   });
 }
 
 function errorResponse(error) {
+  if (error instanceof ContentSafetyError) {
+    if (error.code === 'CONTENT_UNSAFE') {
+      return { ok: false, code: error.code, message: '内容未通过安全检查，请调整后再试。' };
+    }
+    return { ok: false, code: error.code, message: '内容安全检查暂时不可用，请稍后重试。' };
+  }
   if (error instanceof ValidationError || error instanceof MemoryValidationError) {
     return { ok: false, code: 'VALIDATION', message: error.message };
   }
@@ -121,35 +133,16 @@ function errorResponse(error) {
 
 exports.main = async (event) => {
   const { OPENID } = cloud.getWXContext();
-  const mode = event.mode || 'product';  // 'product' | 'raw'
   const service = makeService();
   try {
     if (!OPENID) throw new ValidationError('trusted user identity is unavailable');
     let data;
     switch (event.action) {
-      case 'send':
-        if (mode === 'raw') {
-          // 对照组：裸 hy3，无记忆无 Agent，直接调用
-          const raw = await cloud.ai().createModel('cloudbase');
-          const result = await raw.generateText({
-            model: process.env.MYALLY_MODEL_NAME || 'hy3',
-            messages: [{ role: 'user', content: (event.payload || {}).text || '' }],
-            temperature: 0.4,
-          });
-          data = {
-            assistantMessage: { text: result.text || '', role: 'assistant' },
-            userMessage: { text: (event.payload || {}).text || '', role: 'user' },
-            memoryStatus: 'disabled',
-            usedMemories: [],
-            createdMemories: [],
-          };
-        } else {
-          data = await service.send(OPENID, event.payload || {});
-        }
-        break;
+      case 'send': data = await service.send(OPENID, event.payload || {}); break;
       case 'list': data = await service.list(OPENID, event.conversationId); break;
       case 'listMemories': data = await service.listMemories(OPENID); break;
       case 'deleteMemory': data = await service.deleteMemory(OPENID, event.memoryId); break;
+      case 'deleteConversation': data = await service.deleteConversation(OPENID, event.conversationId); break;
       default: throw new ValidationError('unknown action');
     }
     return { ok: true, data };

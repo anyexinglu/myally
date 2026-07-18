@@ -3,22 +3,64 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
-  ConversationService, InMemoryMessageRepository, ValidationError,
+  ConversationService, InMemoryMessageRepository, ValidationError, ContentSafetyError,
 } = require('../packages/conversation');
 const { CloudBaseModelAdapter, toModelMessages, parseAgentEnvelope } = require('../cloudfunctions/conversations/model-adapter');
 
-function fixture(modelGenerate) {
+function fixture(modelGenerate, contentModerator) {
   let id = 0;
   const repository = new InMemoryMessageRepository();
   const service = new ConversationService({
     repository,
     model: { generate: modelGenerate || (async () => ({ text: '我收到了。' })) },
+    contentModerator,
     imageUrlResolver: async (fileId) => `https://files.example/${encodeURIComponent(fileId)}`,
     now: () => new Date(`2026-07-17T08:00:${String(id).padStart(2, '0')}.000Z`),
     idFactory: () => `id-${++id}`,
   });
   return { service, repository };
 }
+
+test('unsafe user text is rejected before persistence and model execution', async () => {
+  let modelCalls = 0;
+  const { service, repository } = fixture(async () => {
+    modelCalls += 1;
+    return { text: '不应执行' };
+  }, {
+    checkText: async (_text, context) => ({ allowed: context.source !== 'user' }),
+  });
+
+  await assert.rejects(
+    () => service.send('alice', { type: 'text', text: '合成风险输入', requestId: 'unsafe-input' }),
+    ContentSafetyError,
+  );
+  assert.equal(modelCalls, 0);
+  assert.deepEqual(await repository.list('alice', '', 50), []);
+});
+
+test('unsafe generated text is rejected before assistant persistence', async () => {
+  const { service, repository } = fixture(async () => ({ text: '合成风险输出' }), {
+    checkText: async (_text, context) => ({ allowed: context.source !== 'assistant' }),
+  });
+
+  await assert.rejects(
+    () => service.send('alice', { type: 'text', text: '正常输入', requestId: 'unsafe-output', conversationId: 'safe-conversation' }),
+    ContentSafetyError,
+  );
+  const stored = await repository.list('alice', 'safe-conversation', 50);
+  assert.equal(stored.length, 1);
+  assert.equal(stored[0].role, 'user');
+});
+
+test('conversation deletion is scoped to the trusted owner', async () => {
+  const { service, repository } = fixture();
+  await service.send('alice', { type: 'text', text: '甲的对话', requestId: 'delete-a', conversationId: 'shared-conversation' });
+  await service.send('bob', { type: 'text', text: '乙的对话', requestId: 'delete-b', conversationId: 'shared-conversation' });
+
+  assert.equal(await service.deleteConversation('alice', 'shared-conversation'), 2);
+  assert.deepEqual(await repository.list('alice', 'shared-conversation', 50), []);
+  assert.equal((await repository.list('bob', 'shared-conversation', 50)).length, 2);
+});
 
 test('text turn is stored before the model runs and assistant output is not memory eligible', async () => {
   let storedAtGeneration = [];

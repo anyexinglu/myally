@@ -2,6 +2,12 @@
 
 class ConversationError extends Error {}
 class ValidationError extends ConversationError {}
+class ContentSafetyError extends ConversationError {
+  constructor(code) {
+    super(code);
+    this.code = code;
+  }
+}
 
 const INPUT_TYPES = new Set(['text', 'image']);
 const nonEmpty = (value) => typeof value === 'string' && value.trim().length > 0;
@@ -51,10 +57,15 @@ class InMemoryMessageRepository {
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id))
       .slice(-limit).map(clone);
   }
+  async deleteConversation(ownerId, conversationId) {
+    const before = this.items.length;
+    this.items = this.items.filter((item) => item.ownerId !== ownerId || item.conversationId !== conversationId);
+    return before - this.items.length;
+  }
 }
 
 class ConversationService {
-  constructor({ repository, model, agent = null, memoryService = null, observer = null, imageUrlResolver = async () => '', now = () => new Date(), idFactory = () => crypto.randomUUID() }) {
+  constructor({ repository, model, agent = null, memoryService = null, observer = null, contentModerator = null, imageUrlResolver = async () => '', now = () => new Date(), idFactory = () => crypto.randomUUID() }) {
     if (!repository) throw new ValidationError('repository is required');
     if (!agent && (!model || typeof model.generate !== 'function')) throw new ValidationError('model adapter or agent is required');
     this.repository = repository;
@@ -62,14 +73,27 @@ class ConversationService {
     this.agent = agent;
     this.memoryService = memoryService;
     this.observer = observer;
+    this.contentModerator = contentModerator;
     this.imageUrlResolver = imageUrlResolver;
     this.now = now;
     this.idFactory = idFactory;
   }
 
+  async ensureSafeText(text, context) {
+    if (!nonEmpty(text) || !this.contentModerator) return;
+    let result;
+    try {
+      result = await this.contentModerator.checkText(text, context);
+    } catch (_) {
+      throw new ContentSafetyError('CONTENT_SAFETY_UNAVAILABLE');
+    }
+    if (!result || result.allowed !== true) throw new ContentSafetyError('CONTENT_UNSAFE');
+  }
+
   async send(ownerId, rawInput) {
     if (!nonEmpty(ownerId)) throw new ValidationError('ownerId is required');
     const input = normalizeInput(rawInput || {});
+    await this.ensureSafeText(input.text, { ownerId, source: 'user' });
     const previousTurn = await this.repository.findTurnByRequest(ownerId, input.requestId);
     const existingUser = previousTurn.find((item) => item.role === 'user');
     const existingAssistant = previousTurn.find((item) => item.role === 'assistant');
@@ -96,6 +120,7 @@ class ConversationService {
       })
       : await this.model.generate({ history, currentMessageId: userMessage.id, imageUrl });
     if (!generated || !nonEmpty(generated.text)) throw new ConversationError('model returned an empty response');
+    await this.ensureSafeText(generated.text, { ownerId, source: 'assistant' });
     const assistantMessage = await this.repository.add(makeMessage({
       id: this.idFactory(), ownerId, conversationId, requestId: input.requestId,
       role: 'assistant', text: generated.text.trim(), temporary: input.temporary,
@@ -135,9 +160,16 @@ class ConversationService {
     if (!this.memoryService) return false;
     return this.memoryService.delete(ownerId, memoryId);
   }
+
+  async deleteConversation(ownerId, conversationId) {
+    if (!nonEmpty(ownerId)) throw new ValidationError('ownerId is required');
+    if (!nonEmpty(conversationId)) throw new ValidationError('conversationId is required');
+    if (typeof this.repository.deleteConversation !== 'function') throw new ConversationError('conversation deletion is unavailable');
+    return this.repository.deleteConversation(ownerId, conversationId);
+  }
 }
 
 module.exports = {
-  ConversationService, InMemoryMessageRepository, ConversationError, ValidationError,
+  ConversationService, InMemoryMessageRepository, ConversationError, ValidationError, ContentSafetyError,
   normalizeInput, makeMessage,
 };
