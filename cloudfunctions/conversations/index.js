@@ -25,8 +25,24 @@ const profileItems = database.collection('profile_items');
 
 class CloudBaseMessageRepository {
   async add(message) {
-    await collection.add({ data: message });
-    return message;
+    // 临时消息自动设置 24 小时过期
+    const toSave = message.temporary
+      ? { ...message, expireAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() }
+      : message;
+    await collection.add({ data: toSave });
+    return toSave;
+  }
+
+  async cleanupExpired() {
+    try {
+      const result = await collection.where({ expireAt: /.*/ }).get();
+      const now = new Date().toISOString();
+      for (const msg of result.data || []) {
+        if (msg.expireAt && msg.expireAt < now) {
+          await collection.doc(msg._id).remove();
+        }
+      }
+    } catch (_) { /* cleanup is best-effort */ }
   }
 
   async findTurnByRequest(ownerId, requestId) {
@@ -143,7 +159,12 @@ exports.main = async (event) => {
     if (!OPENID) throw new ValidationError('trusted user identity is unavailable');
     let data;
     switch (event.action) {
-      case 'send': data = await service.send(OPENID, event.payload || {}); break;
+      case 'send': data = await service.send(OPENID, event.payload || {});
+        // 每次发送后清理过期临时消息
+        if (service.repository && typeof service.repository.cleanupExpired === 'function') {
+          service.repository.cleanupExpired().catch(() => {});
+        }
+        break;
       case 'list': data = await service.list(OPENID, event.conversationId); break;
       case 'listMemories': data = await service.listMemories(OPENID); break;
       case 'deleteMemory': data = await service.deleteMemory(OPENID, event.memoryId); break;
