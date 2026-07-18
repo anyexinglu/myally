@@ -1,71 +1,61 @@
 /**
- * 我在 A/B 自动化测试 — 通过 miniprogram-automator 操作真实小程序界面
+ * 我在 A/B 自动化测试 — 通过 miniprogram-automator 控制仿真小程序
  *
- * 完全复用用户操作路径：
- *   模拟器页面输入文字 → 点击发送 → wx.cloud.callFunction → hy3 → 读取回复
- *
- * 对照组（A - raw）：云函数直接调 hy3，无记忆无 Agent
- * 实验组（B - product）：正常产品管线（Agent + 记忆 + 知识）
+ * 工作方式：
+ *   1. automator.launch() 启动 DevTools + 自动化端口
+ *   2. 打开首页
+ *   3. 输入文字 → 调用 send() → wx.cloud.callFunction → hy3
+ *   4. 读取回复
  *
  * 用法：
- *   先打开微信开发者工具，确认服务端口已开启（当前 58002）
  *   node ab-automation.js scenarios/health-memory.json              # 两边跑
- *   node ab-automation.js scenarios/health-memory.json --mode raw    # 只跑裸模型
- *   node ab-automation.js scenarios/health-memory.json --mode product # 只跑产品
+ *   node ab-automation.js scenarios/health-memory.json --mode=raw   # 只跑 A
+ *   node ab-automation.js scenarios/health-memory.json --mode=product
  */
 
 const automator = require('miniprogram-automator');
 const path = require('node:path');
 const fs = require('node:fs');
+const { spawnSync } = require('node:child_process');
 
 const PROJECT_PATH = path.resolve(__dirname, '../..');
 const SCENARIOS_DIR = path.join(__dirname, 'scenarios');
-const WS_PORT = '9420';
+const CLI_PATH = '/Applications/wechatwebdevtools.app/Contents/MacOS/cli';
 
-function loadScenario(filePath) {
-  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+function loadScenario(fp) {
+  return JSON.parse(fs.readFileSync(fp, 'utf8'));
 }
 
-function sleep(ms) {
-  return new Promise(r => setTimeout(r, ms));
-}
-
-async function waitForReply(page, timeoutMs = 60000) {
-  const start = Date.now();
-  while (Date.now() - start < timeoutMs) {
-    try {
-      const data = await page.data();
-      const msgs = data.messages || [];
-      // 找最后一条非 pending、非 failed 的 assistant 消息
-      const last = [...msgs].reverse().find(m =>
-        m.role === 'assistant' && !m.pending && !m.failed && m.text && m.text.length > 0
-      );
-      if (last) return last;
-    } catch {}
-    await sleep(500);
-  }
-  return null;
-}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 async function runScenario(scenario, mode) {
-  const label = mode === 'raw' ? '对照组 A：裸 hy3' : '实验组 B：我在产品';
-  console.log(`\n📱 [${label}] 连接开发者工具 :${WS_PORT}...`);
+  const label = mode === 'raw' ? 'A: 裸 hy3' : 'B: 我在产品';
+  console.log(`\n[${label}] 启动自动化会话...`);
 
-  let miniProgram;
-  try {
-    miniProgram = await automator.connect({ wsEndpoint: `ws://127.0.0.1:${WS_PORT}` });
-    console.log(`  ✅ 已连接到运行中的 DevTools`);
-  } catch (err) {
-    console.log(`  ❌ 连接失败: ${err.message}`);
-    console.log(`  请确认微信开发者工具已打开，且安全设置中「服务端口」已开启`);
-    return null;
-  }
+  const mp = await automator.launch({
+    projectPath: PROJECT_PATH,
+    cliPath: CLI_PATH,
+    timeout: 60000,
+  });
+  console.log('  ✅ DevTools 启动，已连接');
+
+  // 等 IDE 编译完成
+  console.log('  等待项目编译...');
+  await sleep(8000);
 
   // 打开首页
-  const page = await miniProgram.navigateTo('/pages/home/index');
-  console.log(`  📄 已打开首页`);
-
-  // 等待页面加载
+  let page;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      page = await mp.navigateTo('/pages/home/index');
+      if (page) break;
+    } catch (e) {
+      console.log(`  尝试打开首页 (${attempt + 1}/5): ${e.message.slice(0, 60)}`);
+      await sleep(3000);
+    }
+  }
+  if (!page) { console.log('  ❌ 无法打开首页'); await mp.close(); return null; }
+  console.log('  ✅ 已打开首页');
   await sleep(2000);
 
   const steps = scenario.steps || [];
@@ -75,107 +65,93 @@ async function runScenario(scenario, mode) {
     const step = steps[i];
     console.log(`\n── 第${step.turn}轮: "${step.user.slice(0, 40)}..." ──`);
 
-    // 输入文字（通过 page.callMethod 触发 onText，与用户操作一致）
+    // 输入文字
     await page.callMethod('onText', { detail: { value: step.user } });
-    await sleep(200);
+    await sleep(300);
 
-    // 点击发送（调用 send 方法）
+    // 发送
     await page.callMethod('send');
-    console.log(`  📤 已发送`);
+    console.log('  📤 已发送');
 
     // 等回复
-    const assistant = await waitForReply(page);
-    if (assistant && assistant.text) {
-      console.log(`  💬 (${assistant.text.length}字): ${assistant.text.slice(0, 120)}...`);
+    let assistant = null;
+    for (let w = 0; w < 60; w++) { // 最多等 60s
+      await sleep(1000);
+      try {
+        const data = await page.data();
+        const msgs = data.messages || [];
+        assistant = [...msgs].reverse().find(m =>
+          m.role === 'assistant' && !m.pending && !m.failed && m.text
+        );
+        if (assistant) break;
+      } catch {}
+    }
+
+    if (assistant) {
+      console.log(`  💬 ${assistant.text.length}字`);
       results.push({
-        turn: step.turn,
-        user: step.user,
+        turn: step.turn, user: step.user,
         reply: assistant.text,
         replyLength: assistant.text.length,
         memoryCount: assistant.memoryCount || 0,
         toolCalls: (assistant.toolCalls || []).length,
       });
     } else {
-      console.log(`  ⚠️ 超时未收到回复`);
+      console.log('  ⚠️ 未收到回复');
       results.push({ turn: step.turn, user: step.user, reply: '', replyLength: 0, memoryCount: 0, toolCalls: 0 });
     }
-
-    // 轮次间隔
-    await sleep(1500);
   }
 
-  await miniProgram.close();
+  await mp.close();
   return { scenario: scenario.name, mode, label, results };
 }
 
+// ======== 对比输出 ========
+
 function printComparison(raw, product) {
-  if (!raw || !product) {
-    console.log('\n⚠️ 对比需要两组数据都完整才能进行');
-    return;
-  }
-
-  console.log('\n═══════════════════════════════════════════════');
-  console.log('  A/B 对比报告（通过真实小程序界面 × 真实 hy3）');
-  console.log('═══════════════════════════════════════════════\n');
-
+  if (!raw || !product) { console.log('\n⚠️ 数据不完整'); return; }
+  console.log('\n═══════════════════════════════════════════');
+  console.log('  A/B 对比报告（真实 hy3 × 真实小程序界面）');
+  console.log('═══════════════════════════════════════════\n');
   for (let i = 0; i < raw.results.length; i++) {
     const a = raw.results[i] || {};
     const b = product.results[i] || {};
-
-    console.log(`第${a.turn || i + 1}轮: "${(a.user || '').slice(0, 30)}"`);
-    console.log(`  A（裸 hy3）  ${a.replyLength || 0}字 | 记忆: 无`);
-    console.log(`     ${(a.reply || '(无回复)').slice(0, 200)}`);
-    console.log(`  B（产品）    ${b.replyLength || 0}字 | 记忆: ${b.memoryCount || 0}条 | 工具: ${b.toolCalls || 0}次`);
-    console.log(`     ${(b.reply || '(无回复)').slice(0, 200)}`);
+    console.log(`第${a.turn || i + 1}轮:`);
+    console.log(`  A（裸 hy3） ${a.replyLength || 0}字`);
+    console.log(`     ${(a.reply || '').slice(0, 200)}`);
+    console.log(`  B（产品）   ${b.replyLength || 0}字 | 记忆: ${b.memoryCount || 0}条`);
+    console.log(`     ${(b.reply || '').slice(0, 200)}`);
     console.log();
   }
-
-  console.log('── 对比要点 ──');
-  console.log('1. B 是否使用了记忆（memoryCount > 0）？A 始终无记忆');
-  console.log('2. B 的回答是否随轮次越来越个性化？');
-  console.log('3. B 是否比 A 更懂用户的情况？');
-  console.log();
-}
-
-function printSingle(result) {
-  if (!result) return;
-  console.log(`\n── ${result.label} 结果 ──`);
-  for (const r of result.results) {
-    console.log(`  第${r.turn}轮: ${r.replyLength}字 | 记忆: ${r.memoryCount}条`);
-  }
+  console.log('结论: B 是否比 A 更"懂"用户？\n');
 }
 
 async function main() {
   const args = process.argv.slice(2);
-  let scenarioPath = args.find(a => !a.startsWith('--')) || path.join(SCENARIOS_DIR, 'health-memory.json');
-  const modeArg = args.find(a => a.startsWith('--mode='));
-  const mode = modeArg ? modeArg.split('=')[1] : null;
+  let scenarioPath = args.find(a => !a.startsWith('--')) || 'health-memory.json';
+  const modeFlag = args.find(a => a.startsWith('--mode='));
+  const mode = modeFlag ? modeFlag.split('=')[1] : null;
 
   if (!fs.existsSync(scenarioPath)) {
     const alt = path.join(SCENARIOS_DIR, scenarioPath);
     if (fs.existsSync(alt)) scenarioPath = alt;
-    else { console.error(`找不到场景: ${scenarioPath}`); process.exit(1); }
+    else { console.error('找不到场景'); process.exit(1); }
   }
 
   const scenario = loadScenario(scenarioPath);
-  console.log(`场景: ${scenario.name}`);
-  console.log(`轮次: ${scenario.steps.length} 轮`);
+  console.log(`场景: ${scenario.name}, ${scenario.steps.length} 轮`);
 
   if (mode === 'raw') {
     const r = await runScenario(scenario, 'raw');
-    printSingle(r);
+    if (r) for (const s of r.results) console.log(`  第${s.turn}轮: ${s.replyLength}字`);
   } else if (mode === 'product') {
     const r = await runScenario(scenario, 'product');
-    printSingle(r);
+    if (r) for (const s of r.results) console.log(`  第${s.turn}轮: ${s.replyLength}字 | 记忆:${s.memoryCount}`);
   } else {
-    // 两边都跑
     const raw = await runScenario(scenario, 'raw');
     const product = await runScenario(scenario, 'product');
     printComparison(raw, product);
   }
 }
 
-main().catch(err => {
-  console.error('错误:', err);
-  process.exitCode = 1;
-});
+main().catch(e => { console.error('错误:', e.message); process.exitCode = 1; });
