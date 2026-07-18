@@ -37,9 +37,22 @@
 
   <view class="composer-zone">
     <view wx:if="{{selectedImage}}" class="selected-image"><image src="{{selectedImage}}" mode="aspectFill" /><view class="remove-image" bindtap="clearImage">×</view></view>
-    <view class="chat-composer">
+    
+    <!-- 录音状态 -->
+    <view wx:if="{{recording}}" class="recording-bar">
+      <view class="recording-indicator">
+        <view class="recording-pulse"></view>
+        <text class="recording-duration">{{recordingDuration}}s</text>
+      </view>
+      <text class="recording-hint">松开 发送 · 上滑 取消</text>
+    </view>
+
+    <view wx:else class="chat-composer">
       <view class="attach-button" bindtap="chooseImage"><text class="attach-icon">＋</text></view>
       <input class="chat-input" maxlength="2000" confirm-type="send" placeholder="{{temporary ? '临时说说…' : '跟我说说…'}}" placeholder-class="chat-placeholder" value="{{text}}" bindinput="onText" bindconfirm="send" />
+      <view class="voice-button {{text || selectedImage ? 'hidden' : ''}}" bindtouchstart="onVoiceStart" bindtouchend="onVoiceEnd" bindtouchmove="onVoiceMove">
+        <text class="voice-icon">🎤</text>
+      </view>
       <button class="send-button {{text || selectedImage ? 'ready' : ''}}" disabled="{{sending || (!text && !selectedImage)}}" bindtap="send">↑</button>
     </view>
   </view>

@@ -1,0 +1,8 @@
+{
+  "name": "asr",
+  "version": "1.0.0",
+  "description": "语音转文字 — 使用腾讯云 ASR",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

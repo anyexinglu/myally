@@ -23,6 +23,7 @@ Page({
   data: {
     messages: [WELCOME], conversationId: '', text: '', selectedImage: '',
     sending: false, anchor: 'message-welcome', temporary: false, headerTop: 44,
+    recording: false, recordingDuration: 0, swipeUp: false,
   },
   async onLoad() {
     this.syncChromeMetrics();
@@ -130,4 +131,104 @@ Page({
   },
   goMine() { wx.redirectTo({ url: '/pages/mine/index' }); },
   goWatch() { wx.redirectTo({ url: '/pages/watch/index' }); },
+
+  // ======== 语音输入 ========
+  _recorder: null as any,
+  _recordTimer: null as any,
+  _startY: 0,
+
+  onVoiceStart(e: any) {
+    if (this.data.sending) return;
+    this._startY = e.touches[0].clientY;
+    this.setData({ recording: true, recordingDuration: 0, swipeUp: false });
+
+    // 开始录音
+    const recorder = wx.getRecorderManager();
+    this._recorder = recorder;
+    recorder.onStart(() => {
+      // 计时
+      let duration = 0;
+      this._recordTimer = setInterval(() => {
+        duration++;
+        this.setData({ recordingDuration: duration });
+        if (duration >= 60) {
+          // 最长60秒自动停止
+          this.endRecording();
+        }
+      }, 1000);
+    });
+    recorder.onError(() => {
+      this.endRecording();
+      wx.showToast({ title: '录音失败', icon: 'none' });
+    });
+    recorder.start({ format: 'aac', sampleRate: 16000, numberOfChannels: 1, encodeBitRate: 24000 });
+  },
+
+  onVoiceMove(e: any) {
+    // 上滑取消
+    const y = e.touches[0].clientY;
+    if (this._startY - y > 80) {
+      this.setData({ swipeUp: true });
+    } else {
+      this.setData({ swipeUp: false });
+    }
+  },
+
+  onVoiceEnd() {
+    if (this.data.swipeUp) {
+      // 上滑取消
+      this._recorder?.stop();
+      this.endRecording();
+      wx.showToast({ title: '已取消', icon: 'none' });
+      return;
+    }
+    this.endRecording();
+    // 开始上传和转写
+    this.transcribeVoice();
+  },
+
+  endRecording() {
+    if (this._recordTimer) { clearInterval(this._recordTimer); this._recordTimer = null; }
+    try { this._recorder?.stop(); } catch (_) {}
+    this.setData({ recording: false });
+  },
+
+  async transcribeVoice() {
+    // 获取录音临时文件
+    const tempFiles = this._recorder?.tempFile;
+    if (!tempFiles) {
+      wx.showToast({ title: '未获取到录音', icon: 'none' });
+      return;
+    }
+
+    try {
+      wx.showLoading({ title: '语音转文字…' });
+      // 上传到 CloudBase
+      const cloudPath = `voice/${Date.now()}.aac`;
+      const uploadResult = await wx.cloud.uploadFile({
+        cloudPath,
+        filePath: tempFiles,
+      });
+      const fileId = uploadResult.fileID;
+
+      // 调用 ASR 云函数转写
+      const asrResult: any = await wx.cloud.callFunction({
+        name: 'asr',
+        data: { fileId, duration: Math.max(this.data.recordingDuration, 1) },
+      });
+      wx.hideLoading();
+
+      const text = (asrResult?.result?.text || '').trim();
+      if (text) {
+        this.setData({ text });
+        // 自动发送
+        this.send();
+      } else {
+        wx.showToast({ title: '未识别到内容', icon: 'none' });
+      }
+    } catch (err: any) {
+      wx.hideLoading();
+      wx.showToast({ title: err.message || '转写失败', icon: 'none' });
+    }
+  },
 });
