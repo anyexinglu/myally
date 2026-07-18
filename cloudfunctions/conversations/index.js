@@ -121,12 +121,32 @@ function errorResponse(error) {
 
 exports.main = async (event) => {
   const { OPENID } = cloud.getWXContext();
+  const mode = event.mode || 'product';  // 'product' | 'raw'
   const service = makeService();
   try {
     if (!OPENID) throw new ValidationError('trusted user identity is unavailable');
     let data;
     switch (event.action) {
-      case 'send': data = await service.send(OPENID, event.payload || {}); break;
+      case 'send':
+        if (mode === 'raw') {
+          // 对照组：裸 hy3，无记忆无 Agent，直接调用
+          const raw = await cloud.ai().createModel('cloudbase');
+          const result = await raw.generateText({
+            model: process.env.MYALLY_MODEL_NAME || 'hy3',
+            messages: [{ role: 'user', content: (event.payload || {}).text || '' }],
+            temperature: 0.4,
+          });
+          data = {
+            assistantMessage: { text: result.text || '', role: 'assistant' },
+            userMessage: { text: (event.payload || {}).text || '', role: 'user' },
+            memoryStatus: 'disabled',
+            usedMemories: [],
+            createdMemories: [],
+          };
+        } else {
+          data = await service.send(OPENID, event.payload || {});
+        }
+        break;
       case 'list': data = await service.list(OPENID, event.conversationId); break;
       case 'listMemories': data = await service.listMemories(OPENID); break;
       case 'deleteMemory': data = await service.deleteMemory(OPENID, event.memoryId); break;

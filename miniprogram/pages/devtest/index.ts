@@ -30,7 +30,7 @@ interface TestResult {
 const TEST_CASES: Array<{
   id: string;
   label: string;
-  steps: Array<{ text: string; desc: string; temporary?: boolean }>;
+  steps: Array<{ text: string; desc: string; temporary?: boolean; expectedTool?: string }>;
 }> = [
   {
     id: 'memory-1',
@@ -59,6 +59,13 @@ const TEST_CASES: Array<{
     label: '临时模式',
     steps: [
       { text: '帮我看看这个临时问题', desc: '临时对话', temporary: true },
+    ],
+  },
+  {
+    id: 'tool-time-1',
+    label: '白名单时间工具',
+    steps: [
+      { text: '请使用当前时间工具告诉我现在几点', desc: '验证current_time', expectedTool: 'current_time' },
     ],
   },
 ];
@@ -128,6 +135,7 @@ Page({
             requestId: `test-${test.id}-${i}-${Date.now()}`,
             conversationId: convId,
             temporary: (step as any).temporary || false,
+            mode: (step as any).mode || 'product',
           },
         });
         const dur = Date.now() - start;
@@ -150,7 +158,8 @@ Page({
           if (usedMem.length > 0) {
             checks.push(`✅召回了${usedMem.length}条记忆`);
           } else {
-            checks.push('⚠️未召回记忆');
+            checks.push('❌未召回记忆');
+            pass = false;
           }
         }
 
@@ -160,6 +169,18 @@ Page({
             checks.push('✅临时跳过'); 
           } else {
             checks.push('⚠️临时未跳过');
+          }
+        }
+
+        if ((step as any).expectedTool) {
+          const expectedTool = (step as any).expectedTool;
+          const toolCalls = assistant && assistant.agent && Array.isArray(assistant.agent.toolCalls)
+            ? assistant.agent.toolCalls : [];
+          if (toolCalls.some((item: any) => item.name === expectedTool && item.status === 'ok')) {
+            checks.push(`✅工具${expectedTool}`);
+          } else {
+            checks.push(`❌未执行工具${expectedTool}`);
+            pass = false;
           }
         }
 
@@ -178,7 +199,7 @@ Page({
           memoryUsed: usedMem.length, memoryCreated: createdMem.length,
         });
 
-        this.addLog('result', `  ${pass ? '✅' : '❌'} ${(dur / 1000).toFixed(1)}s: ${assistant.text.slice(0, 100)}...`);
+        this.addLog('result', `  ${pass ? '✅' : '❌'} ${checks.join(' · ')}: ${assistant.text.slice(0, 100)}...`);
 
       } catch (err: any) {
         stepResults.push({ step: i + 1, desc: step.desc, pass: false, detail: `❌${err.message}`, duration: 0, memoryUsed: 0, memoryCreated: 0 });

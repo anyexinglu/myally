@@ -38,6 +38,10 @@
     }
   ],
   "cloudFunctions": ["entries", "conversations"],
+  "cloudFunctionConfig": {
+    "entries": { "timeoutSeconds": 3 },
+    "conversations": { "timeoutSeconds": 60 }
+  },
   "conversationDefaults": {
     "provider": "cloudbase",
     "model": "hy3"

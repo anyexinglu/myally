@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
 """
-我在 A/B 测试评估框架
-
-核心思路：
-  A（裸模型）：直接调LLM，无记忆无上下文
-  B（我在产品）：走完整Hermes-lite流水线（Agent+记忆+技能+知识）
-
-对比维度：
-  1. 个性化：B是否使用了用户历史信息
-  2. 知识深度：B是否引用了权威来源
-  3. 长期记忆：B在多轮后是否持续记住用户情况
-  4. 综合能力：综合各维度的整体体验
+我在 A/B 对比测试 — 本地开关控制
 
 用法：
-  python3 ab_test.py scenarios/health-memory.json
-  python3 ab_test.py scenarios/health-memory.json --verbose  # 显示完整回复
+  # 对照组：裸模型（无记忆无 Agent）
+  python3 ab_test.py scenarios/health-memory.json --mode raw
+
+  # 实验组：完整产品（Agent + 记忆 + 知识）
+  python3 ab_test.py scenarios/health-memory.json --mode product
+
+  # 两边同时跑，对比输出（默认）
+  python3 ab_test.py scenarios/health-memory.json --compare
+
+  # 只看汇总对比，不显示详情
+  python3 ab_test.py scenarios/health-memory.json --compare --summary
 """
 
 import json
@@ -40,134 +39,198 @@ def call_harness(mode: str, payload: dict, prev_result: dict = None) -> dict:
 
 def load_scenario(path: str) -> dict:
     with open(path, "r", encoding="utf-8") as f:
-        # 支持JSON和带注释的JSON
-        content = f.read()
-        # 去掉注释行
-        lines = [l for l in content.split("\n") if not l.strip().startswith("//") and not l.strip().startswith("#")]
-        return json.loads("\n".join(lines))
+        return json.load(f)
 
 
-def run_scenario(scenario: dict, verbose: bool = False):
-    """跑一个场景：A/B 对比全部轮次"""
-    name = scenario.get("name", "未命名场景")
+def run_single(scenario: dict, mode: str, verbose: bool = False):
+    """单模式跑完全部轮次"""
+    name = scenario.get("name", "未命名")
     steps = scenario.get("steps", [])
-
-    print("=" * 72)
-    print(f"  A/B 测试: {name}")
-    print(f"  {scenario.get('description', '')}")
-    print("=" * 72)
-    print()
-
-    product_state = {}  # 存B的对话状态
+    results = []
+    state = {}
 
     for step in steps:
-        turn = step.get("turn", 0)
-        user_text = step.get("user", "")
+        turn = step["turn"]
+        text = step["user"]
+        payload = {"text": text, "turn": turn}
+        result = call_harness(mode, payload, state)
+        if "convId" in result:
+            state["convId"] = result["convId"]
+        results.append({
+            "turn": turn,
+            "user": text,
+            "reply": result.get("reply", f"[错误] {result.get('error', '')}"),
+            "memories_used": result.get("usedMemories", []),
+            "memories_created": result.get("createdMemories", []),
+            "memory_status": result.get("memoryStatus", ""),
+        })
+
+    return results
+
+
+def print_side_by_side(results_a: list, results_b: list, scenario: dict, verbose: bool):
+    """A/B 并排对比输出"""
+    name = scenario.get("name", "未命名场景")
+    desc = scenario.get("description", "")
+    steps = scenario.get("steps", [])
+
+    W = 38
+    print()
+    print("=" * 80)
+    print(f"  A/B 对比: {name}")
+    if desc:
+        print(f"  {desc}")
+    print("=" * 80)
+    print()
+
+    for i, step in enumerate(steps):
+        turn = step["turn"]
         note = step.get("note", "")
+        a = results_a[i] if i < len(results_a) else {}
+        b = results_b[i] if i < len(results_b) else {}
 
         print(f"── 第{turn}轮 ──")
-        print(f"用户: {user_text}")
+        print(f"用户: {step['user']}")
         if note:
-            print(f"     ({note})")
+            print(f"  ({note})")
         print()
 
-        # A: 裸模型（无记忆）
-        result_a = call_harness("raw", {"text": user_text})
-        reply_a = result_a.get("reply", f"[错误] {result_a.get('error', '未知')}")
+        r_a = a.get("reply", "")
+        r_b = b.get("reply", "")
 
-        # B: 产品（有记忆）
-        result_b = call_harness("product", {"text": user_text, "turn": turn}, product_state)
-        if "convId" in result_b:
-            product_state["convId"] = result_b["convId"]
-        reply_b = result_b.get("reply", f"[错误] {result_b.get('error', '未知')}")
+        disp_a = r_a[:200] + ("..." if len(r_a) > 200 else "")
+        disp_b = r_b[:200] + ("..." if len(r_b) > 200 else "")
 
-        # 输出对比
-        _print_comparison(reply_a, reply_b, result_b, verbose)
+        print(f"  {'A: 裸模型':^{W}}  {'B: 我在（产品）':^{W}}")
+        print(f"  {'─' * W}  {'─' * W}")
+        lines_a = disp_a.split("\n")
+        lines_b = disp_b.split("\n")
+        max_l = max(len(lines_a), len(lines_b))
+        for li in range(max_l):
+            la = lines_a[li] if li < len(lines_a) else ""
+            lb = lines_b[li] if li < len(lines_b) else ""
+            print(f"  {la:<{W}}  {lb:<{W}}")
+        print(f"  {'─' * W}  {'─' * W}")
+
+        # B的记忆信息
+        mu = b.get("memories_used", [])
+        mc = b.get("memories_created", [])
+        if mu:
+            for m in mu:
+                print(f"  📌 B用了记忆: [{m['type']}] {m['value']}")
+        if mc:
+            for m in mc:
+                print(f"  📝 B新建记忆: [{m['type']}] {m['value']}")
+        if b.get("memory_status"):
+            print(f"  💾 B记忆状态: {b['memory_status']}")
+        print(f"  💾 A: 裸模型（无记忆）")
         print()
 
-    # 最终评价
-    print("─" * 72)
-    print("  评估总结")
-    print("─" * 72)
-    _print_evaluation(len(steps), verbose)
+    # 汇总对比
+    print("─" * 40)
+    print("  对比总结")
+    print("─" * 40)
+    print()
+    print("  [1] 个性化：B是否使用了用户历史信息？A没有？")
+    print("  [2] 连贯性：B在多轮后是否持续记住早期信息？")
+    print("  [3] 知识域：回答是否有权威依据？")
+    print('  [4] 综合体感：哪个更像在跟一个"越来越懂你"的人聊天？')
     print()
 
 
-def _print_comparison(reply_a: str, reply_b: str, result_b: dict, verbose: bool):
-    """并排展示A/B回复"""
-    # 截断显示
-    display_a = reply_a if verbose else reply_a[:300] + ("..." if len(reply_a) > 300 else "")
-    display_b = reply_b if verbose else reply_b[:300] + ("..." if len(reply_b) > 300 else "")
+def print_single(results: list, scenario: dict, mode_label: str, verbose: bool):
+    """单模式输出"""
+    name = scenario.get("name", "未命名")
+    steps = scenario.get("steps", [])
 
-    width = 35
-    print(f"  {'─' * width}  {'─' * width}")
-    print(f"  {'A: 裸模型':<{width}}  {'B: 我在（Harness）':<{width}}")
-    print(f"  {'─' * width}  {'─' * width}")
+    print()
+    print("=" * 60)
+    print(f"  模式: {mode_label}")
+    print(f"  场景: {name}")
+    print("=" * 60)
     print()
 
-    # 分行对比
-    lines_a = display_a.split("\n")
-    lines_b = display_b.split("\n")
-    max_lines = max(len(lines_a), len(lines_b))
-    for i in range(max_lines):
-        la = lines_a[i] if i < len(lines_a) else ""
-        lb = lines_b[i] if i < len(lines_b) else ""
-        print(f"  {la:<{width}}  {lb:<{width}}")
+    for i, s in enumerate(steps):
+        r = results[i] if i < len(results) else {}
+        print(f"── 第{s['turn']}轮: {s['user']} ──")
+        print()
+        print(r.get("reply", "[无回复]"))
+        print()
 
-    print(f"  {'─' * width}  {'─' * width}")
-
-    # B的额外信息
-    mem_used = result_b.get("usedMemories", [])
-    mem_created = result_b.get("createdMemories", [])
-    mem_status = result_b.get("memoryStatus", "")
-    if mem_used:
-        for m in mem_used:
-            print(f"  📌 B使用了记忆: [{m['type']}] {m['value']}")
-    if mem_created:
-        for m in mem_created:
-            print(f"  📝 B新建记忆: [{m['type']}] {m['value']}")
-    if mem_status:
-        print(f"  💾 记忆状态: {mem_status}")
-
-    # A的额外信息（裸模型无记忆）
-    print(f"  💾 A: 无记忆（裸模型）")
-
-
-def _print_evaluation(total_turns: int, verbose: bool):
-    """根据测试轮次给出定性评价"""
-    print()
-    print(f"  共 {total_turns} 轮对话")
-    print()
-    print("  对比要点：")
-    print("  1. 个性化：B的回答是否使用了用户的个人情况？A是否完全没有？")
-    print("  2. 知识深度：回答是否有权威依据，还是泛泛而谈？")
-    print("  3. 长期记忆：多轮后B是否持续记住用户早期说的信息？")
-    print("  4. 综合吸引力：作为用户，你更愿意跟A还是B聊下去？")
-    print()
-    print("  评估方式：")
-    print("  • 当前：人工阅读对比")
-    print("  • 后续可演化为：LLM自动评分 + 人工校验")
-    print()
+        mc = r.get("memories_created", [])
+        if mc:
+            for m in mc:
+                print(f"  📝 新建: [{m['type']}] {m['value']}")
+        print()
 
 
 def main():
     if len(sys.argv) < 2:
-        print("用法: python3 ab_test.py <场景文件.json> [--verbose]")
-        print("示例: python3 ab_test.py scenarios/health-memory.json")
+        print("用法:")
+        print("  python3 ab_test.py <场景.json>              # 对比模式（默认）")
+        print("  python3 ab_test.py <场景.json> --mode raw     # 只跑裸模型")
+        print("  python3 ab_test.py <场景.json> --mode product # 只跑产品")
+        print("  python3 ab_test.py <场景.json> --compare      # 明确对比模式")
+        print("  python3 ab_test.py <场景.json> --compare --summary  # 只汇总")
         sys.exit(1)
 
     scenario_path = sys.argv[1]
-    verbose = "--verbose" in sys.argv
-
     if not os.path.exists(scenario_path):
-        # 尝试从 scenarios/ 下找
-        scenario_path = str(HARNESS_DIR / "scenarios" / scenario_path)
-        if not os.path.exists(scenario_path):
-            print(f"找不到场景文件: {sys.argv[1]}")
+        p2 = str(HARNESS_DIR / "scenarios" / scenario_path)
+        if os.path.exists(p2):
+            scenario_path = p2
+        else:
+            print(f"找不到: {scenario_path}")
             sys.exit(1)
 
+    verbose = "--verbose" in sys.argv
+    summary_only = "--summary" in sys.argv
+    mode = None
+    do_compare = False
+
+    for a in sys.argv[2:]:
+        if a.startswith("--mode="):
+            mode = a.split("=", 1)[1]
+        elif a == "--mode" and len(sys.argv) > sys.argv.index(a) + 1:
+            mode = sys.argv[sys.argv.index(a) + 1]
+        elif a == "--compare":
+            do_compare = True
+
     scenario = load_scenario(scenario_path)
-    run_scenario(scenario, verbose)
+
+    if mode == "raw":
+        results = run_single(scenario, "raw", verbose)
+        print_single(results, scenario, "裸模型（raw）", verbose)
+    elif mode == "product":
+        results = run_single(scenario, "product", verbose)
+        print_single(results, scenario, "我在产品（product）", verbose)
+    else:
+        # 默认对比模式
+        do_compare = True
+
+    if do_compare or mode is None:
+        results_a = run_single(scenario, "raw", verbose)
+        results_b = run_single(scenario, "product", verbose)
+        if summary_only:
+            # 简短对比
+            print()
+            print("=" * 60)
+            print("  A/B 对比摘要")
+            print("=" * 60)
+            for i, s in enumerate(scenario.get("steps", [])):
+                a = results_a[i] if i < len(results_a) else {}
+                b = results_b[i] if i < len(results_b) else {}
+                r_a = a.get("reply", "")
+                r_b = b.get("reply", "")
+                len_a = len(r_a)
+                len_b = len(r_b)
+                mu = len(b.get("memories_used", []))
+                mc = len(b.get("memories_created", []))
+                print(f"  第{s['turn']}轮: A({len_a}c)")
+                if mu: print(f"       B: {mu}条记忆被使用, {mc}条新建")
+            print()
+        else:
+            print_side_by_side(results_a, results_b, scenario, verbose)
 
 
 if __name__ == "__main__":

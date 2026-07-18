@@ -18,6 +18,7 @@
     "@fission-ai/openspec": "^1.6.0",
     "js-yaml": "^5.2.1",
     "miniprogram-api-typings": "latest",
+    "miniprogram-automator": "^0.12.1",
     "typescript": "latest"
   },
   "engines": {

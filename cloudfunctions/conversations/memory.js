@@ -77,6 +77,8 @@ class MemoryService {
     }
     const candidates = normalizeCandidates(rawCandidates);
     const created = [];
+    let currentItems = typeof this.repository.listCurrent === 'function'
+      ? await this.repository.listCurrent(ownerId) : [];
     for (const candidate of candidates) {
       const observedAt = this.now().toISOString();
       const status = CONFIRMED_SOURCES.has(candidate.sourceType) ? 'confirmed' : 'candidate';
@@ -88,6 +90,9 @@ class MemoryService {
       if (status === 'confirmed') {
         if (candidate.sourceType === 'explicit_user_correction' && typeof this.repository.supersede === 'function') {
           await this.repository.supersede(ownerId, candidate.key, observedAt);
+          currentItems = currentItems.filter((item) => item.key !== candidate.key);
+        } else if (currentItems.some((item) => item.key === candidate.key && item.value === candidate.value)) {
+          continue;
         }
         const profile = {
           id: this.idFactory(), ownerId, sourceMessageId: message.id, key: candidate.key, type: candidate.type,
@@ -97,6 +102,7 @@ class MemoryService {
           extractorVersion: this.extractorVersion, createdAt: observedAt, updatedAt: observedAt,
         };
         await this.repository.addProfileItem(profile);
+        currentItems.push(profile);
         created.push(profile);
       }
     }

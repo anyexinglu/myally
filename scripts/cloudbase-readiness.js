@@ -50,6 +50,7 @@ const summary = {
   schemaVersion: manifest.version,
   collections: manifest.collections.map((item) => item.name),
   cloudFunctions: manifest.cloudFunctions,
+  cloudFunctionConfig: manifest.cloudFunctionConfig,
   conversationDefaults: manifest.conversationDefaults,
   requiredUniqueIndexes: manifest.collections.flatMap((collection) => collection.indexes
     .filter((index) => index.unique)

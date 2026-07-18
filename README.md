@@ -2,7 +2,7 @@
 
 > 长期懂你，陪你做到。中文产品名已确认为“我在”，英文名保留“MyAlly”；微信小程序名称注册状态仍待实时验证。
 >
-> **Agent 接手前必读：** `AGENTS.md`、`docs/PRODUCT-PLAN.md`、`docs/PRODUCT-HANDOFF.md`和`docs/OPENSPEC-WORKFLOW.md`。主计划v3.2是当前执行基线。OpenSpec及首个change已初始化；Hermes-lite代码链路和小程序入口已实现。2026-07-18已切换到用户新建的小程序AppID：独立CloudBase环境和两个云函数在线，四个集合、拒绝客户端直连策略及11个业务索引均已按清单创建。成长计划的云开发资源及混元10亿免费Token已领取，环境已无付费升级地切换到资源点模式，按量付费和自动续费保持关闭；`hy3`真实调用已由开发者工具完成“文字发送→用户消息落库→模型回复→助手消息展示”的端到端验证。当前主链剩余项是记忆中心、第二轮记忆影响回答、临时模式、白名单工具、双账号隔离及真机验收。
+> **Agent 接手前必读：** `AGENTS.md`、`docs/PRODUCT-PLAN.md`、`docs/PRODUCT-HANDOFF.md`和`docs/OPENSPEC-WORKFLOW.md`。主计划v3.2是当前执行基线。OpenSpec及首个change已初始化；Hermes-lite代码链路和小程序入口已实现。2026-07-18已切换到用户新建的小程序AppID：独立CloudBase环境和两个云函数在线，四个集合、拒绝客户端直连策略及11个业务索引均已按清单创建。成长计划的云开发资源及混元10亿免费Token已领取，环境已无付费升级地切换到资源点模式，按量付费和自动续费保持关闭。`conversations`远端超时已从默认3秒调整为60秒；微信开发者工具已真实通过文字发送、数据库落库、`hy3`回复、Observer/Profile写入、记忆中心、第二轮记忆召回、临时模式和`current_time`白名单工具。当前剩余验收是物理真机、双账号隔离、删除传播及模型/工具不可用降级。
 
 ## 项目文档
 
@@ -44,7 +44,7 @@ npm install
 npm run verify
 ```
 
-最近实测（2026-07-18）：领域、契约、部署清单与云函数入口集成测试全部通过，26个必需文件结构检查、部署副本一致性和TypeScript检查通过。云函数入口测试用纯内存仿CloudBase SDK加载实际部署文件，覆盖服务端OPENID、用户消息先落库、模型回复、Observation/Profile Item写入、第二轮记忆注入、另一账号隔离、缺集合时不误称消息已保存，以及Node.js 16缺少`structuredClone`时的兼容入口；这提高部署前可信度，但不替代真实CloudBase验收。新小程序环境已完成四个集合、拒绝客户端直连策略和11个业务索引，两个云函数均已部署。环境在不购买升级套餐、不启用按量付费或自动续费的前提下切换到资源点模式；首次真实模型调用暴露Node.js 16不支持`structuredClone`，两个云函数入口补兼容层并重新部署后，开发者工具重试已收到`hy3`真实助手回复。下一步继续完成记忆写入与召回、临时模式、白名单工具、双账号隔离及真机验收。
+最近实测（2026-07-18）：36/36领域、契约、部署清单与云函数入口集成测试全部通过，26个必需文件结构检查、部署副本一致性和TypeScript检查通过。云函数入口测试用纯内存仿CloudBase SDK加载实际部署文件，覆盖服务端OPENID、消息落库、模型回复、Observation/Profile Item、第二轮记忆注入、相同显式偏好去重、另一账号隔离、缺集合安全失败及Node.js 16兼容入口。真实CloudBase的`conversations`超时调整为60秒后，严格评测确认：首轮建立1条记忆，第二轮召回2条既有测试记忆并影响回答，临时模式回复且`memoryStatus=skipped`，`current_time`工具调用状态为`ok`；“我的空间”也显示真实已确认画像。重复评测留下的两条旧测试画像未擅自删除；新增去重逻辑会保留Observation审计记录但不再为完全相同的显式偏好创建重复Profile Item，且已重新部署。
 
 首页安全区修复（2026-07-17）：顶部根据微信胶囊位置动态计算起点，“私密对话 / 临时对话”改为胶囊左侧的轻量状态入口；输入框按底部导航高度和`safe-area-inset-bottom`定位，导航使用`border-box`避免实际高度超出声明值。本轮`npm run verify`通过，开发者工具可识别新版页面节点且问题面板为0；本机ScreenCaptureKit在复查时启动失败，因此仍需以开发者工具模拟器或真机截图完成最终视觉留档。
 
@@ -54,7 +54,7 @@ npm run verify
 2. 在开发者工具中选择测试/正式AppID；真实AppID所在的`project.config.json`和`project.private.config.json`均已Git忽略，不得强制加入版本库。
 3. 在开发者工具中先开通或绑定CloudBase测试环境；若工具显示`cloudProject: false`或环境列表为空，必须由项目管理员完成开通。然后在`miniprogram/config/env.ts`本机填写环境ID，不提交真实值。
 4. 创建`entries`、`messages`、`observations`和`profile_items`集合；安全规则禁止小程序端直接读写，所有访问只经云函数。建议索引见OpenSpec change的`design.md`。
-5. 在CloudBase AI+开启模型；默认适配`cloudbase / hy3`，用于当前成长计划/体验模型的最低配置冒烟。`MYALLY_MODEL_NAME`可覆盖基础回退；开通资源点套餐并在控制台启用对应模型后，可选设置`MYALLY_FAST_MODEL_NAME`、`MYALLY_REASONER_MODEL_NAME`、`MYALLY_MULTIMODAL_MODEL_NAME`和`MYALLY_OBSERVER_MODEL_NAME`。模型名必须以当前环境“模型管理”实际启用项为准；如需实时搜索，再配置受信HTTPS服务的`MYALLY_SEARCH_ENDPOINT`和仅存在于云函数环境的`MYALLY_SEARCH_API_KEY`。
+5. 在CloudBase AI+开启模型；默认适配`cloudbase / hy3`，用于当前成长计划/体验模型的最低配置冒烟。`MYALLY_MODEL_NAME`可覆盖基础回退；开通资源点套餐并在控制台启用对应模型后，可选设置`MYALLY_FAST_MODEL_NAME`、`MYALLY_REASONER_MODEL_NAME`、`MYALLY_MULTIMODAL_MODEL_NAME`和`MYALLY_OBSERVER_MODEL_NAME`。模型名必须以当前环境“模型管理”实际启用项为准；如需实时搜索，再配置受信HTTPS服务的`MYALLY_SEARCH_ENDPOINT`和仅存在于云函数环境的`MYALLY_SEARCH_API_KEY`。`conversations`会串行执行回答和记忆观察器，云端执行超时必须按部署清单设为60秒，不能保留平台默认3秒。
 6. 分别在`cloudfunctions/entries`、`cloudfunctions/conversations`安装依赖并上传部署。
 7. `entries`云函数环境变量设置`ADMIN_OPENIDS=<照护者openid>`。
 8. 依次验证文字→消息落库→模型回复、明确偏好→记忆中心→第二轮引用、当前时间→工具调用、删除→不再召回、临时模式→不读写记忆；最后用两个微信账号验证消息和记忆隔离。
@@ -71,7 +71,7 @@ npm run cloud:deploy
 
 ## 当前验收边界
 
-自动测试、Hermes-lite Fake Model闭环、TypeScript、OpenSpec严格校验、微信开发者工具编译和预览包生成已真实通过；新AppID的CloudBase环境、四个集合、客户端拒绝策略、11个业务索引和两个云函数均已就绪。成长计划10亿免费Token已领取，资源点模式已激活且按量付费、自动续费保持关闭；`hy3`真实文字回复已在小程序界面完成端到端验证。本机正式AppID和环境ID均不得进入版本库。尚未真实验收的是Observer/Profile记忆写入、记忆中心、第二轮召回影响回答、临时模式、白名单工具、删除传播、双账号隔离和真机端测。另一个旧小程序环境中的历史函数上传不计入本项目验收。当前口径是“POC-1B代码、本地验证、前端预览及微信AI文字主链完成”，不是全部记忆与账号隔离验收完成。
+自动测试、Hermes-lite Fake Model闭环、TypeScript、OpenSpec严格校验、微信开发者工具编译和预览包生成已真实通过；新AppID的CloudBase环境、四个集合、客户端拒绝策略、11个业务索引和两个云函数均已就绪。成长计划10亿免费Token已领取，资源点模式已激活且按量付费、自动续费保持关闭；开发者工具内的真实消息、`hy3`回复、记忆写入/展示/召回、临时模式及白名单时间工具均已通过，OpenSpec 7.2完成。本机正式AppID和环境ID不得进入版本库。尚未完成的是物理真机两轮验证、双账号隔离、删除传播、模型/工具不可用降级及最终OpenSpec归档；在这些完成前不得称为全部端到端验收完成。
 
 ## 已知安全债
 

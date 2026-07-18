@@ -13,6 +13,8 @@ test('CloudBase schema declares the complete POC data and function surface', () 
     'entries', 'messages', 'observations', 'profile_items',
   ]);
   assert.deepEqual(schema.cloudFunctions, ['entries', 'conversations']);
+  assert.equal(schema.cloudFunctionConfig.conversations.timeoutSeconds, 60);
+  assert.ok(schema.cloudFunctionConfig.conversations.timeoutSeconds > schema.cloudFunctionConfig.entries.timeoutSeconds);
   assert.deepEqual(schema.conversationDefaults, { provider: 'cloudbase', model: 'hy3' });
   for (const collection of schema.collections) {
     assert.equal(collection.clientAccess, 'deny');

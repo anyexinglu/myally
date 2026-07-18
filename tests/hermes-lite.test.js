@@ -116,6 +116,25 @@ test('observer confirms explicit user memory but rejects assistant-source pollut
   assert.equal((await memory.list('user-a')).length, 1);
 });
 
+test('repeated identical explicit memory keeps observations but does not duplicate the profile', async () => {
+  let id = 0;
+  const repository = new InMemoryMemoryRepository();
+  const memory = new MemoryService({ repository, idFactory: () => `dedupe-${++id}` });
+  const candidate = {
+    key: 'preference.risk_tolerance', type: 'preference', value: '偏好低风险方案', keywords: ['低风险'],
+    sourceType: 'explicit_user_statement', confidence: 'high', sensitivity: 'low',
+  };
+  const makeMessage = (messageId) => ({
+    id: messageId, role: 'user', text: '我偏好低风险方案',
+    provenance: { source: 'user_message', memoryEligible: true },
+  });
+
+  assert.equal((await memory.recordCandidates('user-a', makeMessage('message-1'), [candidate])).length, 1);
+  assert.equal((await memory.recordCandidates('user-a', makeMessage('message-2'), [candidate])).length, 0);
+  assert.equal(repository.observations.length, 2);
+  assert.equal((await memory.list('user-a')).length, 1);
+});
+
 test('retrieval is owner-scoped, bounded, deletable, and disabled in temporary mode', async () => {
   let id = 0;
   const repository = new InMemoryMemoryRepository();
