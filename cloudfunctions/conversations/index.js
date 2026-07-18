@@ -84,7 +84,7 @@ function makeService() {
   const model = new CloudBaseModelAdapter({
     ai: cloud.ai(),
     provider: process.env.MYALLY_MODEL_PROVIDER || 'cloudbase',
-    modelName: process.env.MYALLY_MODEL_NAME || 'hy3',
+    modelName: process.env.MYALLY_MODEL_NAME || 'kimi-k3',
     fastModelName: process.env.MYALLY_FAST_MODEL_NAME || '',
     reasonerModelName: process.env.MYALLY_REASONER_MODEL_NAME || '',
     multimodalModelName: process.env.MYALLY_MULTIMODAL_MODEL_NAME || '',

@@ -24,6 +24,7 @@ Page({
     messages: [WELCOME], conversationId: '', text: '', selectedImage: '',
     sending: false, anchor: 'message-welcome', temporary: false, headerTop: 44,
     recording: false, recordingDuration: 0, swipeUp: false,
+    streamingText: '', streamingMessageId: '',
   },
   async onLoad() {
     this.syncChromeMetrics();
@@ -109,16 +110,50 @@ Page({
         requestId: draft.requestId, conversationId: draft.conversationId,
         type: draft.type, text: draft.text, fileId: uploadedFileId, temporary: draft.temporary,
       } }) as any;
-      const assistant = decorate({
-        ...turn.assistantMessage,
-        memoryCount: (turn.usedMemories || []).length,
-        memoryStatus: turn.memoryStatus,
+
+      // 流式展示：逐字显示助手回复
+      const fullText = turn.assistantMessage?.text || '';
+      const streamId = `stream-${turn.assistantMessage?.id || Date.now()}`;
+      this.setData({
+        streamingMessageId: streamId,
+        streamingText: '',
+        sending: false,
       });
-      const next = messages.flatMap((item) => item.id === draft.id
-        ? [decorate(turn.userMessage), assistant]
+
+      // 先插入空白占位消息
+      const placeholder = decorate({
+        ...turn.assistantMessage,
+        id: streamId,
+        text: '▍',
+        streaming: true,
+      });
+      const withPlaceholder = messages.flatMap((item) => item.id === draft.id
+        ? [decorate(turn.userMessage), placeholder]
         : [item]);
       if (!draft.temporary) wx.setStorageSync('myallyConversationId', turn.conversationId);
-      this.setData({ messages: next, conversationId: turn.conversationId, anchor: `message-${turn.assistantMessage.id}` });
+      this.setData({ messages: withPlaceholder, conversationId: turn.conversationId, anchor: `message-${streamId}` });
+
+      // 逐字打字效果
+      if (fullText.length > 0) {
+        let displayed = '';
+        const charsPerTick = 3; // 每帧展示字数
+        for (let i = 0; i < fullText.length; i += charsPerTick) {
+          displayed = fullText.slice(0, i + charsPerTick);
+          const suffix = i + charsPerTick < fullText.length ? '▍' : '';
+          const updated = this.data.messages.map((item: any) =>
+            item.id === streamId ? { ...item, text: displayed + suffix, streaming: i + charsPerTick < fullText.length } : item
+          );
+          this.setData({ messages: updated, anchor: `message-${streamId}` });
+          await new Promise(r => setTimeout(r, 20)); // 20ms 间隔
+        }
+        // 最终替换为完整消息（去掉 streaming 标记）
+        const final = this.data.messages.map((item: any) =>
+          item.id === streamId
+            ? decorate({ ...turn.assistantMessage, memoryCount: (turn.usedMemories || []).length, memoryStatus: turn.memoryStatus })
+            : item
+        );
+        this.setData({ messages: final, streamingMessageId: '', anchor: `message-${turn.assistantMessage.id}` });
+      }
     } catch (error) {
       const failed = messages.map((item) => item.id === draft.id
         ? { ...item, uploadedFileId, pending: false, failed: true }

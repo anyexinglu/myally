@@ -61,7 +61,7 @@ class FakeCollection {
 function loadCloudFunction({ missingCollections = [] } = {}) {
   const state = {
     ownerId: 'owner-a',
-    collections: { messages: [], observations: [], profile_items: [] },
+    collections: { messages: [], observations: [], profile_items: [], tasks: [] },
     missingCollections: new Set(missingCollections),
     modelCalls: [],
     userMessagesAtFirstAgentCall: null,
@@ -147,7 +147,7 @@ test('deployed conversations entry persists, calls the LLM, remembers, and isola
   assert.equal(first.ok, true);
   assert.equal(first.data.userMessage.ownerId, 'owner-a');
   assert.equal(first.data.assistantMessage.text, '我已经收到你的说明。');
-  assert.equal(state.modelCalls[0].model, 'hy3');
+  assert.equal(state.modelCalls[0].model, 'kimi-k3');
   assert.equal(state.userMessagesAtFirstAgentCall, 1, 'user message must exist before the first model call');
   assert.equal(state.collections.messages.length, 2);
   assert.equal(state.collections.observations.length, 1);

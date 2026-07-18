@@ -96,3 +96,12 @@
   color: #b0b9b6;
   font-size: 24rpx;
 }
+
+/* 流式光标闪烁 */
+.streaming-cursor {
+  animation: blink 0.8s step-end infinite;
+  color: #4ecfa5;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
