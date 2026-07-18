@@ -16,6 +16,21 @@
     <view class="record-footer"><text class="hint">来源：{{item.observedAt || '用户明确表达'}}</text><button class="delete-button" data-id="{{item.id}}" bindtap="removeMemory">删除记忆</button></view>
   </view>
 
+  <!-- 待办任务 -->
+  <view class="section-heading"><text class="section-title">待办任务</text><text class="hint">{{tasks.length}} 项</text></view>
+  <view wx:if="{{!loading && !error && tasks.length === 0}}" class="memory-empty card">
+    <text class="hint">还没有待办任务。你可以说"提醒我…"来创建。</text>
+  </view>
+  <view class="memory-card card" wx:for="{{tasks}}" wx:key="id">
+    <view class="row between">
+      <text class="tag">{{item.status === 'pending' ? '待办' : '已完成'}}</text>
+      <button class="delete-button" data-id="{{item.id}}" bindtap="completeTask">完成</button>
+    </view>
+    <text class="memory-value">{{item.title}}</text>
+    <text wx:if="{{item.description}}" class="hint">{{item.description}}</text>
+    <view class="record-footer"><text class="hint">{{item.createdAt || ''}}</text></view>
+  </view>
+
   <view class="section-heading record-heading"><text class="section-title">原有记录</text><text class="hint">{{entries.length}} 条</text></view>
 
   <view class="record-summary">

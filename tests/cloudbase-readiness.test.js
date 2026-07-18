@@ -10,7 +10,7 @@ const schema = JSON.parse(fs.readFileSync(path.join(root, 'cloudbase/schema.json
 
 test('CloudBase schema declares the complete POC data and function surface', () => {
   assert.deepEqual(schema.collections.map((item) => item.name), [
-    'entries', 'messages', 'observations', 'profile_items',
+    'entries', 'messages', 'observations', 'profile_items', 'tasks',
   ]);
   assert.deepEqual(schema.cloudFunctions, ['entries', 'conversations']);
   assert.equal(schema.cloudFunctionConfig.conversations.timeoutSeconds, 60);

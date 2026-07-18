@@ -31,9 +31,18 @@
       "name": "profile_items",
       "clientAccess": "deny",
       "indexes": [
-        { "name": "owner_status_updated", "unique": false, "fields": [{ "name": "ownerId", "direction": "asc" }, { "name": "status", "direction": "asc" }, { "name": "updatedAt", "direction": "desc" }] },
+        { "name": "owner_status_validity", "unique": false, "fields": [{ "name": "ownerId", "direction": "asc" }, { "name": "status", "direction": "asc" }, { "name": "deletedAt", "direction": "asc" }, { "name": "updatedAt", "direction": "desc" }] },
         { "name": "owner_key_status", "unique": false, "fields": [{ "name": "ownerId", "direction": "asc" }, { "name": "key", "direction": "asc" }, { "name": "status", "direction": "asc" }] },
         { "name": "owner_item_id", "unique": true, "fields": [{ "name": "ownerId", "direction": "asc" }, { "name": "id", "direction": "asc" }] }
+      ]
+    },
+    {
+      "name": "tasks",
+      "clientAccess": "deny",
+      "indexes": [
+        { "name": "owner_created", "unique": false, "fields": [{ "name": "ownerId", "direction": "asc" }, { "name": "createdAt", "direction": "asc" }] },
+        { "name": "owner_status", "unique": false, "fields": [{ "name": "ownerId", "direction": "asc" }, { "name": "status", "direction": "asc" }, { "name": "createdAt", "direction": "asc" }] },
+        { "name": "task_id", "unique": true, "fields": [{ "name": "id", "direction": "asc" }] }
       ]
     }
   ],

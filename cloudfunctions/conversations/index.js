@@ -15,6 +15,7 @@ const { SkillRegistry, CapabilityRouter } = require('./skills');
 const { ToolRegistry, PolicyEngine, createCoreTools } = require('./tools');
 const { HttpSearchAdapter } = require('./search-adapter');
 const { WechatContentModerator } = require('./content-safety');
+const { TaskService, CloudBaseTaskRepository } = require('./task');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV, timeout: 60000 });
 const database = cloud.database();
@@ -98,7 +99,11 @@ function makeService() {
     endpoint: process.env.MYALLY_SEARCH_ENDPOINT,
     apiKey: process.env.MYALLY_SEARCH_API_KEY || '',
   }) : null;
-  for (const tool of createCoreTools({ memoryService, searchAdapter })) tools.register(tool);
+  const taskService = new TaskService({
+    repository: new CloudBaseTaskRepository(database),
+    idFactory: () => `${Date.now()}-${Math.random().toString(36).slice(2, 12)}`,
+  });
+  for (const tool of createCoreTools({ memoryService, searchAdapter, taskService })) tools.register(tool);
   const agent = new AgentOrchestrator({
     model, router: new CapabilityRouter(), skills: new SkillRegistry(),
     tools, policy: new PolicyEngine(), maxSteps: 3,
@@ -143,6 +148,10 @@ exports.main = async (event) => {
       case 'listMemories': data = await service.listMemories(OPENID); break;
       case 'deleteMemory': data = await service.deleteMemory(OPENID, event.memoryId); break;
       case 'deleteConversation': data = await service.deleteConversation(OPENID, event.conversationId); break;
+      case 'listTasks': data = await taskService.list(OPENID); break;
+      case 'listPendingTasks': data = await taskService.listPending(OPENID); break;
+      case 'completeTask': data = await taskService.complete(OPENID, event.taskId); break;
+      case 'cancelTask': data = await taskService.cancel(OPENID, event.taskId); break;
       default: throw new ValidationError('unknown action');
     }
     return { ok: true, data };

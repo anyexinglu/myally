@@ -38,3 +38,8 @@ export async function uploadInputFile(tempFilePath, type) {
   const result = await wx.cloud.uploadFile({ cloudPath, filePath: tempFilePath });
   return result.fileID;
 }
+
+/** 任务相关 */
+export async function callTask(action, data = {}) {
+  return callConversation(action, data);
+}
