@@ -2,7 +2,7 @@
 
 > 长期懂你，陪你做到。中文产品名已确认为“我在”，英文名保留“MyAlly”；微信小程序名称注册状态仍待实时验证。
 >
-> **Agent 接手前必读：** `AGENTS.md`、`docs/PRODUCT-PLAN.md`、`docs/PRODUCT-HANDOFF.md`和`docs/OPENSPEC-WORKFLOW.md`。主计划v3.2是当前执行基线。OpenSpec及首个change已初始化；Hermes-lite代码链路和小程序入口已实现，微信开发者工具已重新编译并成功生成正式AppID预览包，但尚未完成CloudBase开通、真实对话部署或真机端测。
+> **Agent 接手前必读：** `AGENTS.md`、`docs/PRODUCT-PLAN.md`、`docs/PRODUCT-HANDOFF.md`和`docs/OPENSPEC-WORKFLOW.md`。主计划v3.2是当前执行基线。OpenSpec及首个change已初始化；Hermes-lite代码链路和小程序入口已实现，微信开发者工具已重新编译并成功生成正式AppID预览包，但目标AppID仍未完成微信认证识别/腾讯云账号绑定，尚未完成真实对话部署或真机端测。
 
 ## 项目文档
 
@@ -44,7 +44,7 @@ npm install
 npm run verify
 ```
 
-最近实测（2026-07-17）：33/33领域、契约、部署清单与云函数入口集成测试通过，26个必需文件结构检查、部署副本一致性和TypeScript检查通过。云函数入口测试用纯内存仿CloudBase SDK加载实际部署文件，覆盖服务端OPENID、用户消息先落库、模型回复、Observation/Profile Item写入、第二轮记忆注入和另一账号隔离；这提高部署前可信度，但不等于真实CloudBase集成。其他契约覆盖工具参数Schema拒绝、零相关记忆过滤、末步工具不执行、只读Skill、搜索不可用降级、推断记忆不召回、显式纠正的版本时间线及四类模型路由。`npm run demo:agent`真实跑通Fake Model两轮记忆影响回答、一次工具调用、临时模式、删除和双账号隔离。微信开发者工具Stable 2.01.2510290已用正式AppID重新编译本轮UI，并由CLI成功生成包含失败原位重试的45.5KB预览包和二维码。当前AppID尚未开通CloudBase：工具侧记录为`cloudProject: false`且环境列表为空，环境接口也返回微信侧`system error`；项目管理员本轮开通扫码失败，因此真实数据库、云函数和模型链路继续列为待补充。生成二维码只证明前端预览包可构建，不等于AI端到端完成。
+最近实测（2026-07-18）：33/33领域、契约、部署清单与云函数入口集成测试通过，26个必需文件结构检查、部署副本一致性和TypeScript检查通过。云函数入口测试用纯内存仿CloudBase SDK加载实际部署文件，覆盖服务端OPENID、用户消息先落库、模型回复、Observation/Profile Item写入、第二轮记忆注入和另一账号隔离；这提高部署前可信度，但不等于真实CloudBase集成。其他契约覆盖工具参数Schema拒绝、零相关记忆过滤、末步工具不执行、只读Skill、搜索不可用降级、推断记忆不召回、显式纠正的版本时间线及四类模型路由。`npm run demo:agent`真实跑通Fake Model两轮记忆影响回答、一次工具调用、临时模式、删除和双账号隔离。微信开发者工具Stable 2.01.2510290已用正式AppID重新编译本轮UI，并由CLI成功生成包含失败原位重试的45.5KB预览包和二维码。现场排查曾因本机配置回退而把两个云函数上传到另一个旧小程序环境；目标环境没有创建集合或写入测试数据。恢复目标“失物交接”AppID后，控制台仍提示非个人主体未通过微信认证，账号绑定尚未完成，因此真实数据库、目标云函数和模型链路继续列为待补充。生成二维码只证明前端预览包可构建，不等于AI端到端完成。
 
 首页安全区修复（2026-07-17）：顶部根据微信胶囊位置动态计算起点，“私密对话 / 临时对话”改为胶囊左侧的轻量状态入口；输入框按底部导航高度和`safe-area-inset-bottom`定位，导航使用`border-box`避免实际高度超出声明值。本轮`npm run verify`通过，开发者工具可识别新版页面节点且问题面板为0；本机ScreenCaptureKit在复查时启动失败，因此仍需以开发者工具模拟器或真机截图完成最终视觉留档。
 
@@ -71,7 +71,7 @@ npm run cloud:deploy
 
 ## 当前验收边界
 
-自动测试、Hermes-lite Fake Model闭环、TypeScript、OpenSpec严格校验、微信开发者工具编译和预览包生成已真实通过；真实CloudBase集合、模型和搜索服务尚未部署。本机已配置正式AppID且由`.gitignore`保护，但该AppID当前尚未开通CloudBase环境，项目管理员开通时扫码失败；恢复后才能完成真实模型、数据库和双账号验收。当前口径是“POC-1B代码、本地验证与前端预览构建完成”，不是CloudBase集成或微信端到端完成。
+自动测试、Hermes-lite Fake Model闭环、TypeScript、OpenSpec严格校验、微信开发者工具编译和预览包生成已真实通过；目标AppID的CloudBase集合、云函数、模型和搜索服务尚未部署。本机正式AppID由`.gitignore`保护；目标控制台当前仍提示微信认证未通过且账号绑定未完成。另一个旧小程序环境中的函数上传不计入本项目验收。当前口径是“POC-1B代码、本地验证与前端预览构建完成”，不是CloudBase集成或微信端到端完成。
 
 ## 已知安全债
 
