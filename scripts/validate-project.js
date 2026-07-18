@@ -73,6 +73,13 @@ for (const file of [
   new vm.Script(fs.readFileSync(path.join(root, file), 'utf8'), { filename: file });
 }
 
+for (const file of ['cloudfunctions/entries/index.js', 'cloudfunctions/conversations/index.js']) {
+  const source = fs.readFileSync(path.join(root, file), 'utf8');
+  if (!source.includes("typeof globalThis.structuredClone !== 'function'")) {
+    throw new Error(`Node.js 16 structuredClone compatibility is missing: ${file}`);
+  }
+}
+
 const app = JSON.parse(fs.readFileSync(path.join(root, 'miniprogram/app.json'), 'utf8'));
 for (const page of ['pages/home/index', 'pages/mine/index', 'pages/watch/index']) {
   if (!app.pages.includes(page)) throw new Error(`page not registered: ${page}`);

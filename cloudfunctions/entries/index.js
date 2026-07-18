@@ -1,5 +1,11 @@
 'use strict';
 
+if (typeof globalThis.structuredClone !== 'function') {
+  globalThis.structuredClone = (value) => value === undefined
+    ? undefined
+    : JSON.parse(JSON.stringify(value));
+}
+
 const cloud = require('wx-server-sdk');
 const { EntryService, ValidationError, ForbiddenError, NotFoundError } = require('./domain');
 

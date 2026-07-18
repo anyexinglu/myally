@@ -1,0 +1,37 @@
+# 基本记忆持久性 - 评测场景
+# 验证最核心的能力：用户说了什么，下一轮应该能记住并使用
+
+name: "基本记忆持久性"
+description: "用户在第一轮建立一个明确偏好，后续轮次应能正确召回并使用"
+
+steps:
+  # 步骤1：建立记忆 - 用户明确说出偏好
+  - input:
+      type: text
+      text: "我偏好低风险的投资方案"
+      ownerId: "eval-user-a"
+      requestId: "eval-basic-1"
+    expect:
+      memoryStatus: "completed"
+
+  # 步骤2：使用记忆 - 同一用户同一对话，回答应体现记忆
+  - input:
+      type: text
+      text: "给我推荐一个方案"
+      ownerId: "eval-user-a"
+      conversationId: "@prev"
+      requestId: "eval-basic-2"
+    expect:
+      usesMemory: true
+      containsKeywords: ["低风险"]
+
+  # 步骤3：跨轮持续 - 第三轮仍能保持一致性
+  - input:
+      type: text
+      text: "还有什么需要注意的"
+      ownerId: "eval-user-a"
+      conversationId: "@prev"
+      requestId: "eval-basic-3"
+    expect:
+      usesMemory: true
+      notContains: ["高风险"]

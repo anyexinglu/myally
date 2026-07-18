@@ -1,0 +1,112 @@
+page {
+  background-color: #0f0f23;
+  color: #e0e0e0;
+  font-size: 14px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 头部 */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.title { font-size: 18px; font-weight: bold; color: #e0e0e0; }
+.actions { display: flex; gap: 8px; }
+.btn {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  line-height: 1.4;
+}
+.btn-primary { background: #4fc3f7; color: #0a0a1a; }
+.btn-clear { background: #333; color: #999; }
+.btn:active { opacity: 0.7; }
+
+.hint-text { font-size: 12px; color: #666; }
+
+/* 测试按钮 */
+.test-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.test-btn {
+  background: #1a1a3e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 12px 14px;
+  cursor: pointer;
+  flex: 1;
+  min-width: 130px;
+  text-align: center;
+}
+.test-btn:active { background: #2a2a5e; }
+.test-btn-disabled { opacity: 0.5; pointer-events: none; }
+.test-label { display: block; font-size: 13px; color: #ccc; margin-bottom: 4px; }
+.test-steps { display: block; font-size: 11px; color: #666; }
+
+/* 状态 */
+.status-bar {
+  padding: 8px 12px;
+  background: #1a1a2e;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #4fc3f7;
+}
+
+/* 汇总报告 */
+.summary {
+  background: #1a1a2e;
+  border-radius: 8px;
+  padding: 10px;
+}
+.summary-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: #e0e0e0;
+  margin-bottom: 8px;
+}
+.summary-row {
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+  gap: 8px;
+}
+.summary-icon { width: 20px; text-align: center; }
+.summary-name { flex: 1; font-size: 13px; color: #ccc; }
+.summary-score { font-size: 12px; color: #4fc3f7; }
+
+/* 日志 */
+.log-area {
+  flex: 1;
+  overflow-y: auto;
+  background: #0a0a1a;
+  border-radius: 8px;
+  padding: 8px;
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  min-height: 200px;
+}
+.log-entry { padding: 2px 0; word-break: break-all; }
+.log-system { color: #666; }
+.log-send { color: #4fc3f7; }
+.log-result { color: #aed581; }
+.log-memory { color: #ffb74d; }
+.log-info { color: #81d4fa; }
+.log-error { color: #ef5350; }
+.log-time { color: #555; margin-right: 6px; }

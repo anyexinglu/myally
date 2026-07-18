@@ -38,4 +38,5 @@ Page({
   },
   goHome() { wx.redirectTo({ url: '/pages/home/index' }); },
   goWatch() { wx.redirectTo({ url: '/pages/watch/index' }); },
+  goDevTest() { wx.navigateTo({ url: '/pages/devtest/index' }); },
 });

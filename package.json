@@ -11,10 +11,12 @@
     "demo:agent": "node scripts/hermes-lite-demo.js",
     "cloud:check": "node scripts/cloudbase-readiness.js",
     "cloud:deploy": "node scripts/cloudbase-readiness.js --deploy",
-    "verify": "npm test && npm run check && npm run demo && npm run demo:agent"
+    "verify": "npm test && npm run check && npm run demo && npm run demo:agent",
+    "test:eval": "node tests/eval/runner.js"
   },
   "devDependencies": {
     "@fission-ai/openspec": "^1.6.0",
+    "js-yaml": "^5.2.1",
     "miniprogram-api-typings": "latest",
     "typescript": "latest"
   },

@@ -1,0 +1,26 @@
+# 临时模式 - 评测场景
+# 验证临时对话不读写长期记忆
+
+name: "临时模式"
+description: "临时对话不应读写长期记忆"
+
+steps:
+  # 步骤1：临时对话应该跳过记忆
+  - input:
+      type: text
+      text: "我最近在考虑换工作"
+      ownerId: "eval-user-a"
+      requestId: "eval-temp-1"
+      temporary: true
+    expect:
+      memoryStatus: "skipped"
+
+  # 步骤2：新的普通对话不应受临时对话影响
+  - input:
+      type: text
+      text: "帮我规划一下"
+      ownerId: "eval-user-a"
+      requestId: "eval-temp-2"
+      conversationId: "@new"
+    expect:
+      notContains: ["换工作"]

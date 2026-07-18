@@ -2,7 +2,8 @@
   "pages": [
     "pages/home/index",
     "pages/mine/index",
-    "pages/watch/index"
+    "pages/watch/index",
+    "pages/devtest/index"
   ],
   "window": {
     "navigationBarTitleText": "我在 MyAlly",

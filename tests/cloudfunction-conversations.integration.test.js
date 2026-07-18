@@ -6,10 +6,11 @@ const Module = require('node:module');
 const path = require('node:path');
 
 class FakeQuery {
-  constructor(items, filter) {
+  constructor(items, filter, failure = null) {
     this.items = items;
     this.filter = filter;
     this.maximum = Infinity;
+    this.failure = failure;
   }
 
   limit(value) {
@@ -22,6 +23,7 @@ class FakeQuery {
   }
 
   async get() {
+    if (this.failure) throw this.failure;
     return { data: structuredClone(this.items.filter((item) => this.matches(item)).slice(0, this.maximum)) };
   }
 
@@ -37,15 +39,20 @@ class FakeQuery {
 }
 
 class FakeCollection {
-  constructor(items) { this.items = items; }
-  async add({ data }) { this.items.push(structuredClone(data)); return { _id: data.id }; }
-  where(filter) { return new FakeQuery(this.items, filter); }
+  constructor(items, failure = null) { this.items = items; this.failure = failure; }
+  async add({ data }) {
+    if (this.failure) throw this.failure;
+    this.items.push(structuredClone(data));
+    return { _id: data.id };
+  }
+  where(filter) { return new FakeQuery(this.items, filter, this.failure); }
 }
 
-function loadCloudFunction() {
+function loadCloudFunction({ missingCollections = [] } = {}) {
   const state = {
     ownerId: 'owner-a',
     collections: { messages: [], observations: [], profile_items: [] },
+    missingCollections: new Set(missingCollections),
     modelCalls: [],
     userMessagesAtFirstAgentCall: null,
   };
@@ -57,7 +64,10 @@ function loadCloudFunction() {
       return {
         collection(name) {
           if (!state.collections[name]) state.collections[name] = [];
-          return new FakeCollection(state.collections[name]);
+          const failure = state.missingCollections.has(name)
+            ? new Error('collection.get:fail -502005 database collection not exists. DATABASE_COLLECTION_NOT_EXIST')
+            : null;
+          return new FakeCollection(state.collections[name], failure);
         },
       };
     },
@@ -145,4 +155,36 @@ test('deployed conversations entry persists, calls the LLM, remembers, and isola
   assert.deepEqual(otherOwnerList, { ok: true, data: [] });
   const otherOwnerMemories = await main({ action: 'listMemories' });
   assert.deepEqual(otherOwnerMemories, { ok: true, data: [] });
+});
+
+test('deployed conversations entry reports setup required without claiming an unsaved message was recorded', async () => {
+  const { main } = loadCloudFunction({ missingCollections: ['messages'] });
+  const result = await main({
+    action: 'send',
+    payload: { type: 'text', text: '测试初始化状态', requestId: 'cloud-missing-r1' },
+  });
+
+  assert.deepEqual(result, {
+    ok: false,
+    code: 'SETUP_REQUIRED',
+    message: '服务尚未完成初始化，本次消息未保存，请稍后再试。',
+  });
+});
+
+test('deployed conversations entry remains loadable on Node.js 16 without native structuredClone', async () => {
+  const nativeStructuredClone = globalThis.structuredClone;
+  try {
+    globalThis.structuredClone = undefined;
+    const { main } = loadCloudFunction();
+    assert.equal(typeof globalThis.structuredClone, 'function');
+
+    const result = await main({
+      action: 'send',
+      payload: { type: 'text', text: 'Node 16兼容测试', requestId: 'cloud-node16-r1' },
+    });
+    assert.equal(result.ok, true);
+    assert.equal(result.data.assistantMessage.text, '我已经收到你的说明。');
+  } finally {
+    globalThis.structuredClone = nativeStructuredClone;
+  }
 });

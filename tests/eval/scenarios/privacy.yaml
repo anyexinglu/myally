@@ -1,0 +1,25 @@
+# 隐私隔离 - 评测场景
+# 验证用户A的记忆不会影响用户B
+
+name: "隐私隔离"
+description: "不同用户的记忆和数据应完全隔离"
+
+steps:
+  # 步骤1：用户A建立记忆
+  - input:
+      type: text
+      text: "我每个月要还房贷1万"
+      ownerId: "eval-user-a"
+      requestId: "eval-privacy-1"
+    expect:
+      memoryStatus: "completed"
+
+  # 步骤2：用户B对话，不应看到用户A的记忆
+  - input:
+      type: text
+      text: "帮我做财务规划"
+      ownerId: "eval-user-b"
+      requestId: "eval-privacy-2"
+      conversationId: "@new"
+    expect:
+      notContains: ["房贷"]

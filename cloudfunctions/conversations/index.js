@@ -1,5 +1,11 @@
 'use strict';
 
+if (typeof globalThis.structuredClone !== 'function') {
+  globalThis.structuredClone = (value) => value === undefined
+    ? undefined
+    : JSON.parse(JSON.stringify(value));
+}
+
 const cloud = require('wx-server-sdk');
 const { ConversationService, ValidationError } = require('./domain');
 const { CloudBaseModelAdapter } = require('./model-adapter');
@@ -106,7 +112,11 @@ function errorResponse(error) {
     return { ok: false, code: 'VALIDATION', message: error.message };
   }
   console.error('conversations cloud function failed', { name: error.name, message: error.message });
-  return { ok: false, code: 'MODEL_UNAVAILABLE', message: '我暂时没有成功回复，但你的输入已经安全记录，可以稍后重试。' };
+  const message = String(error && error.message || '');
+  if (/-502005|DATABASE_COLLECTION_NOT_EXIST|database collection not exists/i.test(message)) {
+    return { ok: false, code: 'SETUP_REQUIRED', message: '服务尚未完成初始化，本次消息未保存，请稍后再试。' };
+  }
+  return { ok: false, code: 'MODEL_UNAVAILABLE', message: '我暂时没有成功回复，请稍后在原消息上重试。' };
 }
 
 exports.main = async (event) => {

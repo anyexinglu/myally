@@ -1,0 +1,54 @@
+<view class="scroll">
+  <!-- 标题 + 操作 -->
+  <view class="header">
+    <text class="title">⚙ 评测测试</text>
+    <view class="actions">
+      <button class="btn btn-primary" bindtap="runAll" disabled="{{running}}">全部运行</button>
+      <button class="btn btn-clear" bindtap="clearLogs">清空</button>
+    </view>
+  </view>
+
+  <view class="hint-text">选择单个用例，或点「全部运行」自动执行全部测试</view>
+
+  <!-- 测试用例按钮 -->
+  <view class="test-grid">
+    <view
+      wx:for="{{testCases}}"
+      wx:key="id"
+      class="test-btn {{running ? 'test-btn-disabled' : ''}}"
+      data-test="{{item.id}}"
+      bindtap="runTest"
+    >
+      <text class="test-label">{{item.label}}</text>
+      <text class="test-steps">{{item.steps.length}} 步</text>
+    </view>
+  </view>
+
+  <!-- 运行状态 -->
+  <view class="status-bar" wx:if="{{running}}">
+    <text>▶ {{currentTest}} · 步骤 {{currentStep}}</text>
+  </view>
+
+  <!-- 汇总报告 -->
+  <view class="summary" wx:if="{{results.length > 0 && !running}}">
+    <view class="summary-title">测试报告</view>
+    <view class="summary-row" wx:for="{{results}}" wx:key="id">
+      <text class="summary-icon">{{item.allPass ? '✅' : '⚠️'}}</text>
+      <text class="summary-name">{{item.label}}</text>
+      <text class="summary-score">{{item.score.toFixed(1)}}/5.0</text>
+    </view>
+  </view>
+
+  <!-- 日志区 -->
+  <scroll-view class="log-area" scroll-y scroll-into-view="log-bottom">
+    <view
+      wx:for="{{logs}}"
+      wx:key="{{item.time}}-{{item.type}}-{{index}}"
+      class="log-entry log-{{item.type}}"
+    >
+      <text class="log-time">{{item.time}}</text>
+      <text>{{item.text}}</text>
+    </view>
+    <view id="log-bottom"></view>
+  </scroll-view>
+</view>
