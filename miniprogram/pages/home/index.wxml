@@ -38,13 +38,15 @@
   <view class="composer-zone">
     <view wx:if="{{selectedImage}}" class="selected-image"><image src="{{selectedImage}}" mode="aspectFill" /><view class="remove-image" bindtap="clearImage">×</view></view>
     
-    <!-- 录音状态 -->
+    <!-- 录音状态（微信风格） -->
     <view wx:if="{{recording}}" class="recording-bar">
-      <view class="recording-indicator">
-        <view class="recording-pulse"></view>
-        <text class="recording-duration">{{recordingDuration}}s</text>
+      <view class="recording-inner">
+        <view class="recording-mic {{swipeUp ? 'cancel' : ''}}">
+          <text class="recording-icon">{{swipeUp ? '↩' : '🎤'}}</text>
+        </view>
+        <text class="recording-label">{{swipeUp ? '松开取消' : '松开 发送'}}</text>
+        <text class="recording-time">{{recordingDuration}}″</text>
       </view>
-      <text class="recording-hint">松开 发送 · 上滑 取消</text>
     </view>
 
     <view wx:else class="chat-composer">

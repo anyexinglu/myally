@@ -167,103 +167,90 @@ Page({
   goMine() { wx.redirectTo({ url: '/pages/mine/index' }); },
   goWatch() { wx.redirectTo({ url: '/pages/watch/index' }); },
 
-  // ======== 语音输入 ========
+  // ======== 语音输入（微信风格） ========
   _recorder: null as any,
   _recordTimer: null as any,
   _startY: 0,
+  _voiceTempFile: '',
 
   onVoiceStart(e: any) {
     if (this.data.sending) return;
     this._startY = e.touches[0].clientY;
+    this._voiceTempFile = '';
     this.setData({ recording: true, recordingDuration: 0, swipeUp: false });
 
-    // 开始录音
     const recorder = wx.getRecorderManager();
     this._recorder = recorder;
+
     recorder.onStart(() => {
-      // 计时
       let duration = 0;
       this._recordTimer = setInterval(() => {
         duration++;
         this.setData({ recordingDuration: duration });
-        if (duration >= 60) {
-          // 最长60秒自动停止
-          this.endRecording();
-        }
+        if (duration >= 60) this.onVoiceEnd();
       }, 1000);
     });
+
+    recorder.onStop((res) => {
+      this._voiceTempFile = res.tempFilePath || '';
+    });
+
     recorder.onError(() => {
       this.endRecording();
       wx.showToast({ title: '录音失败', icon: 'none' });
     });
+
     recorder.start({ format: 'aac', sampleRate: 16000, numberOfChannels: 1, encodeBitRate: 24000 });
   },
 
   onVoiceMove(e: any) {
-    // 上滑取消
     const y = e.touches[0].clientY;
-    if (this._startY - y > 80) {
-      this.setData({ swipeUp: true });
-    } else {
-      this.setData({ swipeUp: false });
-    }
+    this.setData({ swipeUp: this._startY - y > 80 });
   },
 
-  onVoiceEnd() {
+  async onVoiceEnd() {
+    this.endRecording();
+
     if (this.data.swipeUp) {
-      // 上滑取消
-      this._recorder?.stop();
-      this.endRecording();
       wx.showToast({ title: '已取消', icon: 'none' });
       return;
     }
-    this.endRecording();
-    // 开始上传和转写
-    this.transcribeVoice();
+
+    // 等待 onStop 回调写入 tempFilePath
+    await new Promise(r => setTimeout(r, 200));
+
+    if (!this._voiceTempFile) {
+      wx.showToast({ title: '未获取到录音', icon: 'none' });
+      return;
+    }
+
+    // 上传 + ASR 转写
+    try {
+      wx.showLoading({ title: '转换中…' });
+      const cloudPath = `voice/${Date.now()}.aac`;
+      const upRes = await wx.cloud.uploadFile({ cloudPath, filePath: this._voiceTempFile });
+      const asrRes: any = await wx.cloud.callFunction({
+        name: 'asr',
+        data: { fileId: upRes.fileID, duration: Math.max(this.data.recordingDuration, 1) },
+      });
+      wx.hideLoading();
+
+      const text = (asrRes?.result?.text || '').trim();
+      if (text) {
+        this.setData({ text });
+        await this.send();
+      } else {
+        wx.showToast({ title: '未识别到内容', icon: 'none' });
+      }
+    } catch (err: any) {
+      wx.hideLoading();
+      wx.showToast({ title: err.message || '转换失败', icon: 'none' });
+    }
   },
 
   endRecording() {
     if (this._recordTimer) { clearInterval(this._recordTimer); this._recordTimer = null; }
     try { this._recorder?.stop(); } catch (_) {}
     this.setData({ recording: false });
-  },
-
-  async transcribeVoice() {
-    // 获取录音临时文件
-    const tempFiles = this._recorder?.tempFile;
-    if (!tempFiles) {
-      wx.showToast({ title: '未获取到录音', icon: 'none' });
-      return;
-    }
-
-    try {
-      wx.showLoading({ title: '语音转文字…' });
-      // 上传到 CloudBase
-      const cloudPath = `voice/${Date.now()}.aac`;
-      const uploadResult = await wx.cloud.uploadFile({
-        cloudPath,
-        filePath: tempFiles,
-      });
-      const fileId = uploadResult.fileID;
-
-      // 调用 ASR 云函数转写
-      const asrResult: any = await wx.cloud.callFunction({
-        name: 'asr',
-        data: { fileId, duration: Math.max(this.data.recordingDuration, 1) },
-      });
-      wx.hideLoading();
-
-      const text = (asrResult?.result?.text || '').trim();
-      if (text) {
-        this.setData({ text });
-        // 自动发送
-        this.send();
-      } else {
-        wx.showToast({ title: '未识别到内容', icon: 'none' });
-      }
-    } catch (err: any) {
-      wx.hideLoading();
-      wx.showToast({ title: err.message || '转写失败', icon: 'none' });
-    }
   },
 });
