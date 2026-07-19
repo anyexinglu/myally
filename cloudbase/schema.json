@@ -46,10 +46,11 @@
       ]
     }
   ],
-  "cloudFunctions": ["entries", "conversations"],
+  "cloudFunctions": ["entries", "conversations", "asr"],
   "cloudFunctionConfig": {
     "entries": { "timeoutSeconds": 3 },
-    "conversations": { "timeoutSeconds": 60 }
+    "conversations": { "timeoutSeconds": 60 },
+    "asr": { "timeoutSeconds": 20 }
   },
   "conversationDefaults": {
     "provider": "cloudbase",

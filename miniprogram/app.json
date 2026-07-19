@@ -12,9 +12,6 @@
     "backgroundColor": "#f7faf9",
     "backgroundTextStyle": "light"
   },
-  "permission": {
-    "scope.record": { "desc": "用于保存你主动录制的语音记录" }
-  },
   "style": "v2",
   "sitemapLocation": "sitemap.json"
 }

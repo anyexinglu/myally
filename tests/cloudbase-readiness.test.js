@@ -8,11 +8,19 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const schema = JSON.parse(fs.readFileSync(path.join(root, 'cloudbase/schema.json'), 'utf8'));
 
+test('conversations declares the WeChat content-safety OpenAPI permission', () => {
+  const config = JSON.parse(fs.readFileSync(
+    path.join(root, 'cloudfunctions/conversations/config.json'),
+    'utf8',
+  ));
+  assert.ok(config.permissions?.openapi?.includes('security.msgSecCheck'));
+});
+
 test('CloudBase schema declares the complete POC data and function surface', () => {
   assert.deepEqual(schema.collections.map((item) => item.name), [
     'entries', 'messages', 'observations', 'profile_items', 'tasks',
   ]);
-  assert.deepEqual(schema.cloudFunctions, ['entries', 'conversations']);
+  assert.deepEqual(schema.cloudFunctions, ['entries', 'conversations', 'asr']);
   assert.equal(schema.cloudFunctionConfig.conversations.timeoutSeconds, 60);
   assert.ok(schema.cloudFunctionConfig.conversations.timeoutSeconds > schema.cloudFunctionConfig.entries.timeoutSeconds);
   assert.deepEqual(schema.conversationDefaults, { provider: 'cloudbase', model: 'hy3' });

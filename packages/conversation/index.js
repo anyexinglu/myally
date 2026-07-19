@@ -84,7 +84,12 @@ class ConversationService {
     let result;
     try {
       result = await this.contentModerator.checkText(text, context);
-    } catch (_) {
+    } catch (error) {
+      console.error('content safety check failed', {
+        name: error && error.name,
+        code: error && (error.code || error.errCode),
+        message: error && (error.message || error.errMsg),
+      });
       throw new ContentSafetyError('CONTENT_SAFETY_UNAVAILABLE');
     }
     if (!result || result.allowed !== true) throw new ContentSafetyError('CONTENT_UNSAFE');

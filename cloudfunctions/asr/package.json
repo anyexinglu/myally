@@ -4,7 +4,6 @@
   "description": "语音转文字 — 腾讯云 ASR SDK",
   "main": "index.js",
   "dependencies": {
-    "wx-server-sdk": "latest",
-    "@tencentcloud/asr": "^1.0.0"
+    "wx-server-sdk": "latest"
   }
 }

@@ -1,8 +1,10 @@
 'use strict';
 
 class MemoryValidationError extends Error {}
-const clone = (value) => structuredClone(value);
+const { embed, cosineSimilarity } = require('./embedder');
+const { hybridRetrieve } = require('./hybrid-retriever');
 const { Retriever } = require('./retriever');
+const clone = (value) => structuredClone(value);
 const CONFIRMED_SOURCES = new Set(['explicit_user_statement', 'explicit_user_correction']);
 const TYPES = new Set(['stable_fact', 'current_state', 'preference', 'goal', 'decision_rule', 'relationship_boundary', 'action_result']);
 
@@ -30,6 +32,18 @@ function normalizeCandidates(raw) {
       sensitivity: ['high', 'medium', 'low'].includes(item.sensitivity) ? item.sensitivity : 'low',
     };
   }).filter(Boolean);
+}
+
+// 服务端安全规则：检测用户输入是否为问题或假设性表达
+// 如果是，强制降级所有候选为 model_inference，防止 LLM 自标 confirmed
+function isQuestionOrHypothetical(text) {
+  const t = (text || '').trim();
+  if (!t) return true;
+  // 以疑问词结尾
+  if (/[吗呢么？?]$/.test(t)) return true;
+  // 假设/不确定表达
+  if (/(如果|假如|假设|不知道|不确定|可能|会不会|是不是|能不能|要不要|该不该|怎么办|怎么选)/.test(t)) return true;
+  return false;
 }
 
 class InMemoryMemoryRepository {
@@ -63,12 +77,13 @@ class InMemoryMemoryRepository {
 }
 
 class MemoryService {
-  constructor({ repository, idFactory = () => crypto.randomUUID(), now = () => new Date(), extractorVersion = 'myally-memory-observer-v1' } = {}) {
+  constructor({ repository, idFactory = () => crypto.randomUUID(), now = () => new Date(), extractorVersion = 'myally-memory-observer-v1', retriever = null } = {}) {
     if (!repository) throw new MemoryValidationError('memory repository is required');
     this.repository = repository;
     this.idFactory = idFactory;
     this.now = now;
     this.extractorVersion = extractorVersion;
+    this.retriever = retriever;
   }
 
   async recordCandidates(ownerId, message, rawCandidates) {
@@ -77,15 +92,20 @@ class MemoryService {
       throw new MemoryValidationError('only original user messages can create memory');
     }
     const candidates = normalizeCandidates(rawCandidates);
+    // 服务端安全规则：如果用户输入是问题/假设/过短，降级所有候选为 model_inference
+    const userText = (message.text || '').trim();
+    const forceInference = isQuestionOrHypothetical(userText);
     const created = [];
     let currentItems = typeof this.repository.listCurrent === 'function'
       ? await this.repository.listCurrent(ownerId) : [];
     for (const candidate of candidates) {
       const observedAt = this.now().toISOString();
-      const status = CONFIRMED_SOURCES.has(candidate.sourceType) ? 'confirmed' : 'candidate';
+      // 如果输入是问题/假设，强制降级 sourceType
+      const effectiveSourceType = forceInference ? 'model_inference' : candidate.sourceType;
+      const status = CONFIRMED_SOURCES.has(effectiveSourceType) ? 'confirmed' : 'candidate';
       const observation = {
         id: this.idFactory(), ownerId, sourceMessageId: message.id, role: 'user', ...candidate,
-        status, observedAt, extractorVersion: this.extractorVersion,
+        sourceType: effectiveSourceType, status, observedAt, extractorVersion: this.extractorVersion,
       };
       await this.repository.addObservation(observation);
       if (status === 'confirmed') {
@@ -115,6 +135,13 @@ class MemoryService {
   async retrieve(ownerId, query, { maxItems = 8, maxChars = 2400, temporary = false } = {}) {
     if (temporary) return { items: [], context: '' };
     const source = await this.repository.listCurrent(ownerId);
+
+    // 使用混合检索（如果有配置）
+    if (this.retriever) {
+      return this.retriever.retrieve({ query: query || '', items: source, maxItems, maxChars });
+    }
+
+    // 降级：原有关键词检索
     const needle = String(query || '').toLowerCase();
     const requestsPersonalContext = /(结合我|我的情况|适合我|方案|计划|安排|下一步|怎么选|建议|取舍)/i.test(needle);
     const scored = source.map((item) => {
@@ -157,6 +184,6 @@ class MemoryObserver {
 }
 
 module.exports = {
-  MemoryValidationError, CloudBaseMemoryRepository, MemoryService, MemoryObserver,
+  MemoryValidationError, InMemoryMemoryRepository, MemoryService, MemoryObserver,
   normalizeCandidates, normalizeMemoryKey, Retriever,
 };

@@ -19,6 +19,16 @@ function requestId() {
   return `wx-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), timeoutMs);
+    Promise.resolve(promise).then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      (error) => { clearTimeout(timer); reject(error); },
+    );
+  });
+}
+
 Page({
   data: {
     messages: [WELCOME], conversationId: '', text: '', selectedImage: '',
@@ -33,8 +43,8 @@ Page({
   syncChromeMetrics() {
     try {
       const capsule = wx.getMenuButtonBoundingClientRect();
-      const system = wx.getSystemInfoSync();
-      const fallbackTop = (system.statusBarHeight || 20) + 4;
+      const windowInfo = wx.getWindowInfo();
+      const fallbackTop = (windowInfo.statusBarHeight || 20) + 4;
       this.setData({ headerTop: Math.max(capsule.top || 0, fallbackTop) });
     } catch (_) {
       this.setData({ headerTop: 44 });
@@ -155,11 +165,13 @@ Page({
         this.setData({ messages: final, streamingMessageId: '', anchor: `message-${turn.assistantMessage.id}` });
       }
     } catch (error) {
+      console.error('[myally] conversation send failed', error);
       const failed = messages.map((item) => item.id === draft.id
         ? { ...item, uploadedFileId, pending: false, failed: true }
         : item);
       this.setData({ messages: failed, anchor: `message-${draft.id}` });
-      wx.showToast({ title: error.message || '发送失败，请稍后再试', icon: 'none' });
+      const errorMessage = error?.message || error?.errMsg || '发送失败，请稍后再试';
+      wx.showToast({ title: String(errorMessage).slice(0, 40), icon: 'none' });
     } finally {
       this.setData({ sending: false });
     }
@@ -171,7 +183,9 @@ Page({
   _recorder: null as any,
   _recordTimer: null as any,
   _startY: 0,
-  _voiceTempFile: '',
+  _voiceStopPromise: null as Promise<string> | null,
+  _resolveVoiceStop: null as ((filePath: string) => void) | null,
+  _rejectVoiceStop: null as ((error: Error) => void) | null,
 
   onVoiceStart(e: any) {
     if (this.data.sending) return;
@@ -183,9 +197,9 @@ Page({
 
   startRecording(e: any) {
     this._startY = e.touches[0].clientY;
-    this._voiceTempFile = '';
     this.setData({ recording: true, recordingDuration: 0, swipeUp: false });
 
+    /* 已停用：data URI 在开发者工具会触发 atob 编码异常，原生 RecorderManager 不需要预播放静音音频。
     // iOS 音频会话初始化——播放一段静音后马上停止，激活音频会话
     try {
       const ctx = wx.createInnerAudioContext();
@@ -193,42 +207,35 @@ Page({
       ctx.src = 'data:audio/mp3,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI1LjEwNAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYlmKQsAAAAAAD/+1DEAAAHAAb/AAAAIAAAQgAAABIgAABAAAABAAAAAJCU9PTkRFUjEwMABDb21tZW50AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/tQxAAAAGAAb/AAAACAABCAAAEiAAAEAAAABAAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg';
       setTimeout(() => { ctx.destroy(); }, 100);
     } catch(_) {}
+    */
 
     try {
       const recorder = wx.getRecorderManager();
       this._recorder = recorder;
-
-      recorder.onStart(() => {
-        let duration = 0;
-        this._recordTimer = setInterval(() => {
-          duration++;
-          this.setData({ recordingDuration: duration });
-          if (duration >= 60) this.onVoiceEnd();
-        }, 1000);
+      this._voiceStopPromise = new Promise<string>((resolve, reject) => {
+        this._resolveVoiceStop = resolve;
+        this._rejectVoiceStop = reject;
       });
-
-      recorder.onStop((res) => {
-        this._voiceTempFile = res.tempFilePath || '';
-      });
-
-      recorder.onError((err) => {
-        this.endRecording();
-        const errMsg = (err as any)?.errMsg || String(err);
-        // 用 toast 显示前 80 字符的错误详情
-        wx.showModal({
-          title: '录音失败',
-          content: `错误：${errMsg.slice(0, 80)}`,
-          confirmText: '知道了',
-        });
-      });
-
-      // 尝试不同参数兼容 iOS
-      recorder.start({ format: 'aac', sampleRate: 44100, numberOfChannels: 1 });
-    } catch (ex: any) {
+      recorder.onStop = (res: any) => {
+        this._resolveVoiceStop?.(String(res?.tempFilePath || ''));
+        this.clearVoiceCallbacks();
+      };
+      recorder.onError = (err: any) => {
+        this._rejectVoiceStop?.(new Error(err?.errMsg || '录音失败'));
+        this.clearVoiceCallbacks();
+      };
+      recorder.start({ duration: 60000, format: 'aac', sampleRate: 16000, numberOfChannels: 1 });
+      let duration = 0;
+      this._recordTimer = setInterval(() => {
+        duration += 1;
+        this.setData({ recordingDuration: duration });
+        if (duration >= 60) this.onVoiceEnd();
+      }, 1000);
+    } catch (_) {
       this.endRecording();
       wx.showModal({
         title: '录音不可用',
-        content: '您的设备暂不支持录音，建议直接用文字输入。',
+        content: '语音识别组件暂不可用，请重新编译后再试，或先用文字输入。',
         confirmText: '知道了',
       });
     }
@@ -240,47 +247,50 @@ Page({
   },
 
   async onVoiceEnd() {
+    if (!this.data.recording) return;
+    const cancelled = this.data.swipeUp;
+    const pendingStop = this._voiceStopPromise;
     this.endRecording();
-
-    if (this.data.swipeUp) {
+    if (cancelled) {
       wx.showToast({ title: '已取消', icon: 'none' });
       return;
     }
-
-    // 等待 onStop 回调写入 tempFilePath
-    await new Promise(r => setTimeout(r, 200));
-
-    if (!this._voiceTempFile) {
-      wx.showToast({ title: '未获取到录音', icon: 'none' });
-      return;
-    }
-
-    // 上传 + ASR 转写
     try {
       wx.showLoading({ title: '转换中…' });
+      const stopTimeout = new Promise<string>((_, reject) => setTimeout(() => reject(new Error('未获取到录音')), 5000));
+      const filePath = await Promise.race([pendingStop || Promise.resolve(''), stopTimeout]);
+      if (!filePath) throw new Error('未获取到录音');
       const cloudPath = `voice/${Date.now()}.aac`;
-      const upRes = await wx.cloud.uploadFile({ cloudPath, filePath: this._voiceTempFile });
-      const asrRes: any = await wx.cloud.callFunction({
-        name: 'asr',
-        data: { fileId: upRes.fileID, duration: Math.max(this.data.recordingDuration, 1) },
-      });
+      const upload = await withTimeout(
+        wx.cloud.uploadFile({ cloudPath, filePath }),
+        15000,
+        '录音上传超时，请改用文字输入',
+      );
+      const response: any = await withTimeout(
+        wx.cloud.callFunction({
+          name: 'asr',
+          data: { fileId: upload.fileID, duration: Math.max(this.data.recordingDuration, 1) },
+        }),
+        30000,
+        '语音识别超时，请改用文字输入',
+      );
+      const text = String(response?.result?.text || '').trim();
       wx.hideLoading();
-
-      const text = (asrRes?.result?.text || '').trim();
-      if (text) {
-        this.setData({ text });
-        await this.send();
-      } else {
-        const code = asrRes?.result?.code || '';
-        if (code === 'ASR_UNAVAILABLE') {
-          wx.showToast({ title: '语音已录制，AI识别暂不可用', icon: 'none' });
-        } else {
-          wx.showToast({ title: '未识别到内容，请再试一次', icon: 'none' });
-        }
+      if (!text) {
+        const code = String(response?.result?.code || '');
+        const title = code === 'ASR_NOT_ACTIVATED' || code === 'ASR_PERMISSION_REQUIRED'
+          ? '语音服务尚未开通，请先用文字输入'
+          : code === 'ASR_QUOTA_EXHAUSTED'
+            ? '本月语音额度已用完，请先用文字输入'
+            : '未识别到内容，请再试一次';
+        wx.showToast({ title, icon: 'none' });
+        return;
       }
+      this.setData({ text });
+      await this.send();
     } catch (err: any) {
       wx.hideLoading();
-      wx.showToast({ title: err.message || '转换失败', icon: 'none' });
+      wx.showToast({ title: err.message || '识别失败，请再试一次', icon: 'none' });
     }
   },
 
@@ -288,5 +298,10 @@ Page({
     if (this._recordTimer) { clearInterval(this._recordTimer); this._recordTimer = null; }
     try { this._recorder?.stop(); } catch (_) {}
     this.setData({ recording: false });
+  },
+  clearVoiceCallbacks() {
+    this._resolveVoiceStop = null;
+    this._rejectVoiceStop = null;
+    this._voiceStopPromise = null;
   },
 });

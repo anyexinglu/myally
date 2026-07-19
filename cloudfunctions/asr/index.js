@@ -1,85 +1,162 @@
 'use strict';
 
 /**
- * ASR 云函数 v2 — 语音转文字
+ * 短语音转文字。
  *
- * 方案：
- *   1. 上传录音到 CloudBase
- *   2. 下载音频
- *   3. 通过 CloudBase AI API 尝试转写
- *   4. 失败时返回提示
+ * 使用 SCF 自动注入的临时凭证调用腾讯云“一句话识别”，不保存长期密钥。
+ * 客户端上传的临时录音无论识别成功与否都会在本次调用结束前删除。
  */
 
-const cloud = require('wx-server-sdk');
+const crypto = require('crypto');
 const https = require('https');
+const cloud = require('wx-server-sdk');
+
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
-exports.main = async (event) => {
-  const { fileId, duration = 5 } = event;
-  if (!fileId) return { ok: false, code: 'NO_FILE', text: '' };
+const HOST = 'asr.tencentcloudapi.com';
+const SERVICE = 'asr';
+const ACTION = 'SentenceRecognition';
+const VERSION = '2019-06-14';
+
+function hmac(key, value, encoding) {
+  return crypto.createHmac('sha256', key).update(value).digest(encoding);
+}
+
+function sha256(value) {
+  return crypto.createHash('sha256').update(value).digest('hex');
+}
+
+function utcDate(timestamp) {
+  return new Date(timestamp * 1000).toISOString().slice(0, 10);
+}
+
+function buildSignedRequest(payload, credentials, timestamp = Math.floor(Date.now() / 1000)) {
+  const body = JSON.stringify(payload);
+  const date = utcDate(timestamp);
+  const canonicalHeaders = [
+    'content-type:application/json; charset=utf-8',
+    `host:${HOST}`,
+    `x-tc-action:${ACTION.toLowerCase()}`,
+    '',
+  ].join('\n');
+  const signedHeaders = 'content-type;host;x-tc-action';
+  const canonicalRequest = [
+    'POST', '/', '', canonicalHeaders, signedHeaders, sha256(body),
+  ].join('\n');
+  const credentialScope = `${date}/${SERVICE}/tc3_request`;
+  const stringToSign = [
+    'TC3-HMAC-SHA256', String(timestamp), credentialScope, sha256(canonicalRequest),
+  ].join('\n');
+  const secretDate = hmac(`TC3${credentials.secretKey}`, date);
+  const secretService = hmac(secretDate, SERVICE);
+  const secretSigning = hmac(secretService, 'tc3_request');
+  const signature = hmac(secretSigning, stringToSign, 'hex');
+  const authorization = [
+    'TC3-HMAC-SHA256',
+    `Credential=${credentials.secretId}/${credentialScope},`,
+    `SignedHeaders=${signedHeaders},`,
+    `Signature=${signature}`,
+  ].join(' ');
+
+  const headers = {
+    Authorization: authorization,
+    'Content-Type': 'application/json; charset=utf-8',
+    Host: HOST,
+    'X-TC-Action': ACTION,
+    'X-TC-Timestamp': String(timestamp),
+    'X-TC-Version': VERSION,
+    'X-TC-Region': credentials.region || 'ap-shanghai',
+  };
+  if (credentials.token) headers['X-TC-Token'] = credentials.token;
+  return { body, headers };
+}
+
+function postJson(body, headers) {
+  return new Promise((resolve, reject) => {
+    const request = https.request({
+      hostname: HOST,
+      path: '/',
+      method: 'POST',
+      headers: { ...headers, 'Content-Length': Buffer.byteLength(body) },
+      timeout: 15000,
+    }, (response) => {
+      const chunks = [];
+      response.on('data', (chunk) => chunks.push(chunk));
+      response.on('end', () => {
+        try {
+          resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')));
+        } catch (_) {
+          reject(new Error('ASR_INVALID_RESPONSE'));
+        }
+      });
+    });
+    request.on('timeout', () => request.destroy(new Error('ASR_TIMEOUT')));
+    request.on('error', reject);
+    request.end(body);
+  });
+}
+
+function safeErrorCode(error) {
+  const code = String(error?.code || error?.message || 'ASR_FAILED');
+  if (/AuthFailure|Unauthorized|PermissionDenied/i.test(code)) return 'ASR_PERMISSION_REQUIRED';
+  if (/FailedOperation|ResourceUnavailable|NotFound/i.test(code)) return 'ASR_NOT_ACTIVATED';
+  if (/LimitExceeded|RequestLimitExceeded/i.test(code)) return 'ASR_QUOTA_EXHAUSTED';
+  if (/TIMEOUT/i.test(code)) return 'ASR_TIMEOUT';
+  return 'ASR_FAILED';
+}
+
+exports.main = async (event = {}) => {
+  const fileId = String(event.fileId || '');
+  const duration = Number(event.duration || 0);
+  if (!fileId.startsWith('cloud://') || !fileId.includes('/voice/')) {
+    return { ok: false, code: 'INVALID_FILE', text: '' };
+  }
+  if (!Number.isFinite(duration) || duration <= 0 || duration > 60) {
+    return { ok: false, code: 'INVALID_DURATION', text: '' };
+  }
 
   try {
-    // 获取音频临时 URL
-    const tmpUrl = await cloud.getTempFileURL({ fileList: [fileId] });
-    const url = tmpUrl.fileList?.[0]?.tempFileURL;
-    if (!url) return { ok: false, code: 'NO_URL', text: '' };
+    const secretId = process.env.TENCENTCLOUD_SECRETID;
+    const secretKey = process.env.TENCENTCLOUD_SECRETKEY;
+    if (!secretId || !secretKey) return { ok: false, code: 'ASR_CREDENTIAL_UNAVAILABLE', text: '' };
 
-    // 方案 A：通过 CloudBase AI 多模态能力（将音频 URL 发给模型）
-    try {
-      const ai = cloud.ai();
-      const model = ai.createModel('cloudbase');
-      const result = await model.generateText({
-        model: 'kimi-k3',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: '请将这段语音内容转写为准确的中文文字。只输出转写结果，不要解释。' },
-              { type: 'file_url', file_url: { url } },
-            ],
-          },
-        ],
-        temperature: 0.1,
-        max_tokens: 500,
-      });
-      if (result?.text?.trim()) return { ok: true, text: result.text.trim() };
-    } catch (_) {
-      // fall through
+    const temporary = await cloud.getTempFileURL({ fileList: [fileId] });
+    const url = temporary.fileList?.[0]?.tempFileURL;
+    if (!url) return { ok: false, code: 'AUDIO_URL_UNAVAILABLE', text: '' };
+
+    const payload = {
+      EngSerViceType: '16k_zh',
+      SourceType: 0,
+      VoiceFormat: 'aac',
+      Url: url,
+      FilterDirty: 1,
+      FilterModal: 1,
+      FilterPunc: 0,
+      ConvertNumMode: 1,
+    };
+    const request = buildSignedRequest(payload, {
+      secretId,
+      secretKey,
+      token: process.env.TENCENTCLOUD_SESSIONTOKEN,
+      region: process.env.TENCENTCLOUD_REGION,
+    });
+    const result = await postJson(request.body, request.headers);
+    const response = result?.Response || {};
+    if (response.Error) {
+      const error = new Error(response.Error.Message || response.Error.Code);
+      error.code = response.Error.Code;
+      throw error;
     }
-
-    // 方案 B：下载音频并尝试通过 Tencent Cloud ASR
+    const text = String(response.Result || '').trim();
+    return { ok: true, code: text ? 'OK' : 'NO_SPEECH', text };
+  } catch (error) {
+    console.error('ASR request failed', { code: safeErrorCode(error) });
+    return { ok: false, code: safeErrorCode(error), text: '' };
+  } finally {
     try {
-      const audioBuf = await new Promise((resolve, reject) => {
-        https.get(url, (res) => {
-          const chunks = [];
-          res.on('data', c => chunks.push(c));
-          res.on('end', () => resolve(Buffer.concat(chunks)));
-        }).on('error', reject);
-      });
-
-      // 使用 cloud.openapi 调用微信内置语音识别（如果支持）
-      try {
-        const result = await cloud.openapi.ai.audioTranslate({
-          fileId,
-          duration: Math.max(duration, 1),
-          source: 'voice_input',
-        });
-        if (result?.text?.trim()) return { ok: true, text: result.text.trim() };
-      } catch (_) {}
-
-      // ASR 不可用，返回音频信息方便调试
-      return {
-        ok: false,
-        code: 'ASR_UNAVAILABLE',
-        text: '',
-        hint: '语音已录制，请在 CloudBase 控制台开通语音识别服务',
-        audioUrl: url,
-        audioSize: audioBuf.length,
-      };
-    } catch (_) {
-      return { ok: false, code: 'DOWNLOAD_FAILED', text: '' };
-    }
-  } catch (err) {
-    return { ok: false, code: 'ERROR', text: '', error: err.message };
+      await cloud.deleteFile({ fileList: [fileId] });
+    } catch (_) {}
   }
 };
+
+exports.__test = { buildSignedRequest, safeErrorCode, utcDate };

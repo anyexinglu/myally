@@ -10,7 +10,7 @@ const cloud = require('wx-server-sdk');
 const { ConversationService, ValidationError, ContentSafetyError } = require('./domain');
 const { CloudBaseModelAdapter } = require('./model-adapter');
 const { AgentOrchestrator } = require('./agent');
-const { MemoryService, MemoryObserver, MemoryValidationError } = require('./memory');
+const { MemoryService, MemoryObserver, MemoryValidationError, Retriever } = require('./memory');
 const { SkillRegistry, CapabilityRouter } = require('./skills');
 const { ToolRegistry, PolicyEngine, createCoreTools } = require('./tools');
 const { HttpSearchAdapter } = require('./search-adapter');
@@ -100,7 +100,7 @@ function makeService() {
   const model = new CloudBaseModelAdapter({
     ai: cloud.ai(),
     provider: process.env.MYALLY_MODEL_PROVIDER || 'cloudbase',
-    modelName: process.env.MYALLY_MODEL_NAME || 'kimi-k3',
+    modelName: process.env.MYALLY_MODEL_NAME || 'hy3',
     fastModelName: process.env.MYALLY_FAST_MODEL_NAME || '',
     reasonerModelName: process.env.MYALLY_REASONER_MODEL_NAME || '',
     multimodalModelName: process.env.MYALLY_MULTIMODAL_MODEL_NAME || '',

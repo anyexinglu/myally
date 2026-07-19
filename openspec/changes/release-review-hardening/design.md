@@ -21,7 +21,7 @@
 - `pass`才继续；`risky/review`或检查异常均失败关闭；
 - 错误只返回稳定错误码，不把用户正文或审核细节写入日志。
 
-CloudBase适配使用服务端`cloud.openapi.security.msgSecCheck`，传入可信OPENID、`version=2`和适合对话的scene。测试使用确定性fake，不调用外部服务。
+CloudBase适配使用服务端`cloud.openapi.security.msgSecCheck`，传入可信OPENID、`version=2`和适合对话的scene；函数目录`config.json`必须声明`permissions.openapi: ["security.msgSecCheck"]`并由契约测试守护。测试使用确定性fake，不调用外部服务。
 
 ### 4. AI透明度与服务边界
 
