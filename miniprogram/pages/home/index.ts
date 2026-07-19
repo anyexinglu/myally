@@ -186,6 +186,8 @@ Page({
   _voiceStopPromise: null as Promise<string> | null,
   _resolveVoiceStop: null as ((filePath: string) => void) | null,
   _rejectVoiceStop: null as ((error: Error) => void) | null,
+  _recorderStopHandler: null as ((res: any) => void) | null,
+  _recorderErrorHandler: null as ((err: any) => void) | null,
 
   onVoiceStart(e: any) {
     if (this.data.sending) return;
@@ -212,18 +214,21 @@ Page({
     try {
       const recorder = wx.getRecorderManager();
       this._recorder = recorder;
+      this.clearVoiceCallbacks();
       this._voiceStopPromise = new Promise<string>((resolve, reject) => {
         this._resolveVoiceStop = resolve;
         this._rejectVoiceStop = reject;
       });
-      recorder.onStop = (res: any) => {
+      this._recorderStopHandler = (res: any) => {
         this._resolveVoiceStop?.(String(res?.tempFilePath || ''));
         this.clearVoiceCallbacks();
       };
-      recorder.onError = (err: any) => {
+      this._recorderErrorHandler = (err: any) => {
         this._rejectVoiceStop?.(new Error(err?.errMsg || '录音失败'));
         this.clearVoiceCallbacks();
       };
+      recorder.onStop(this._recorderStopHandler);
+      recorder.onError(this._recorderErrorHandler);
       recorder.start({ duration: 60000, format: 'aac', sampleRate: 16000, numberOfChannels: 1 });
       let duration = 0;
       this._recordTimer = setInterval(() => {
@@ -300,6 +305,12 @@ Page({
     this.setData({ recording: false });
   },
   clearVoiceCallbacks() {
+    try {
+      if (this._recorderStopHandler) this._recorder?.offStop?.(this._recorderStopHandler);
+      if (this._recorderErrorHandler) this._recorder?.offError?.(this._recorderErrorHandler);
+    } catch (_) {}
+    this._recorderStopHandler = null;
+    this._recorderErrorHandler = null;
     this._resolveVoiceStop = null;
     this._rejectVoiceStop = null;
     this._voiceStopPromise = null;

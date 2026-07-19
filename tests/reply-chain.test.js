@@ -20,6 +20,9 @@ test('voice recognition waits for recording completion and reuses the conversati
   assert.equal(app.plugins, undefined);
   assert.equal(app.permission?.['scope.record'], undefined);
   assert.match(home, /wx\.getRecorderManager\(\)/);
+  assert.match(home, /recorder\.onStop\(this\._recorderStopHandler\)/);
+  assert.match(home, /recorder\.onError\(this\._recorderErrorHandler\)/);
+  assert.doesNotMatch(home, /recorder\.on(?:Stop|Error)\s*=/);
   assert.match(home, /name:\s*'asr'/);
   assert.match(home, /await this\.send\(\)/);
   assert.match(home, /录音上传超时，请改用文字输入/);
