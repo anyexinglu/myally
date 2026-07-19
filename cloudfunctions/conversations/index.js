@@ -109,6 +109,7 @@ function makeService() {
   const memoryService = new MemoryService({
     repository: new CloudBaseMemoryRepository(),
     idFactory: () => `${Date.now()}-${Math.random().toString(36).slice(2, 12)}`,
+    retriever: new Retriever({ enabled: true }),
   });
   const tools = new ToolRegistry();
   const searchAdapter = process.env.MYALLY_SEARCH_ENDPOINT ? new HttpSearchAdapter({

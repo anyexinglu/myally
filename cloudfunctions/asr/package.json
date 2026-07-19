@@ -1,8 +1,10 @@
 {
-  "name": "asr",
+  "name": "myally-asr",
   "version": "1.0.0",
-  "description": "语音转文字 — 使用腾讯云 ASR",
+  "description": "语音转文字 — 腾讯云 ASR SDK",
+  "main": "index.js",
   "dependencies": {
-    "wx-server-sdk": "latest"
+    "wx-server-sdk": "latest",
+    "@tencentcloud/asr": "^1.0.0"
   }
 }

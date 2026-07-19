@@ -2,6 +2,7 @@
 
 class MemoryValidationError extends Error {}
 const clone = (value) => structuredClone(value);
+const { Retriever } = require('./retriever');
 const CONFIRMED_SOURCES = new Set(['explicit_user_statement', 'explicit_user_correction']);
 const TYPES = new Set(['stable_fact', 'current_state', 'preference', 'goal', 'decision_rule', 'relationship_boundary', 'action_result']);
 
@@ -156,5 +157,6 @@ class MemoryObserver {
 }
 
 module.exports = {
-  MemoryValidationError, InMemoryMemoryRepository, MemoryService, MemoryObserver, normalizeCandidates, normalizeMemoryKey,
+  MemoryValidationError, CloudBaseMemoryRepository, MemoryService, MemoryObserver,
+  normalizeCandidates, normalizeMemoryKey, Retriever,
 };

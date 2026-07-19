@@ -175,32 +175,63 @@ Page({
 
   onVoiceStart(e: any) {
     if (this.data.sending) return;
+
+    // 直接尝试录音（微信会自动触发权限请求）
+    // 不先调 wx.authorize，因为 iOS 上可能不生效
+    this.startRecording(e);
+  },
+
+  startRecording(e: any) {
     this._startY = e.touches[0].clientY;
     this._voiceTempFile = '';
     this.setData({ recording: true, recordingDuration: 0, swipeUp: false });
 
-    const recorder = wx.getRecorderManager();
-    this._recorder = recorder;
+    // iOS 音频会话初始化——播放一段静音后马上停止，激活音频会话
+    try {
+      const ctx = wx.createInnerAudioContext();
+      ctx.autoplay = true;
+      ctx.src = 'data:audio/mp3,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI1LjEwNAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYlmKQsAAAAAAD/+1DEAAAHAAb/AAAAIAAAQgAAABIgAABAAAABAAAAAJCU9PTkRFUjEwMABDb21tZW50AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/tQxAAAAGAAb/AAAACAABCAAAEiAAAEAAAABAAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg';
+      setTimeout(() => { ctx.destroy(); }, 100);
+    } catch(_) {}
 
-    recorder.onStart(() => {
-      let duration = 0;
-      this._recordTimer = setInterval(() => {
-        duration++;
-        this.setData({ recordingDuration: duration });
-        if (duration >= 60) this.onVoiceEnd();
-      }, 1000);
-    });
+    try {
+      const recorder = wx.getRecorderManager();
+      this._recorder = recorder;
 
-    recorder.onStop((res) => {
-      this._voiceTempFile = res.tempFilePath || '';
-    });
+      recorder.onStart(() => {
+        let duration = 0;
+        this._recordTimer = setInterval(() => {
+          duration++;
+          this.setData({ recordingDuration: duration });
+          if (duration >= 60) this.onVoiceEnd();
+        }, 1000);
+      });
 
-    recorder.onError(() => {
+      recorder.onStop((res) => {
+        this._voiceTempFile = res.tempFilePath || '';
+      });
+
+      recorder.onError((err) => {
+        this.endRecording();
+        const errMsg = (err as any)?.errMsg || String(err);
+        // 用 toast 显示前 80 字符的错误详情
+        wx.showModal({
+          title: '录音失败',
+          content: `错误：${errMsg.slice(0, 80)}`,
+          confirmText: '知道了',
+        });
+      });
+
+      // 尝试不同参数兼容 iOS
+      recorder.start({ format: 'aac', sampleRate: 44100, numberOfChannels: 1 });
+    } catch (ex: any) {
       this.endRecording();
-      wx.showToast({ title: '录音失败', icon: 'none' });
-    });
-
-    recorder.start({ format: 'aac', sampleRate: 16000, numberOfChannels: 1, encodeBitRate: 24000 });
+      wx.showModal({
+        title: '录音不可用',
+        content: '您的设备暂不支持录音，建议直接用文字输入。',
+        confirmText: '知道了',
+      });
+    }
   },
 
   onVoiceMove(e: any) {
@@ -240,7 +271,12 @@ Page({
         this.setData({ text });
         await this.send();
       } else {
-        wx.showToast({ title: '未识别到内容', icon: 'none' });
+        const code = asrRes?.result?.code || '';
+        if (code === 'ASR_UNAVAILABLE') {
+          wx.showToast({ title: '语音已录制，AI识别暂不可用', icon: 'none' });
+        } else {
+          wx.showToast({ title: '未识别到内容，请再试一次', icon: 'none' });
+        }
       }
     } catch (err: any) {
       wx.hideLoading();
