@@ -21,12 +21,14 @@ function normalizeInput(input) {
   const requestId = typeof input.requestId === 'string' ? input.requestId.trim() : '';
   const conversationId = typeof input.conversationId === 'string' ? input.conversationId.trim() : '';
   const temporary = input && input.temporary === true;
+  const skillPrompt = typeof input.skillPrompt === 'string' ? input.skillPrompt.trim() : '';
   if (type === 'text' && !text) throw new ValidationError('text is required');
   if (text.length > 2000) throw new ValidationError('text is too long');
   if (type === 'image' && !fileId) throw new ValidationError('cloud file id is required');
   if (!requestId || requestId.length > 100) throw new ValidationError('valid requestId is required');
   if (conversationId.length > 100) throw new ValidationError('conversationId is too long');
-  return { type, text, fileId, requestId, conversationId, temporary };
+  if (skillPrompt.length > 1000) throw new ValidationError('skillPrompt is too long');
+  return { type, text, fileId, requestId, conversationId, temporary, skillPrompt };
 }
 
 function makeMessage({ id, ownerId, conversationId, requestId, role, type, text, fileId, createdAt, temporary = false, agent = null }) {
@@ -121,7 +123,7 @@ class ConversationService {
     const generated = this.agent
       ? await this.agent.run({
         ownerId, input: { ...input, imageUrl }, history, memoryItems: memoryResult.items,
-        temporary: input.temporary,
+        temporary: input.temporary, skillPrompt: input.skillPrompt,
       })
       : await this.model.generate({ history, currentMessageId: userMessage.id, imageUrl });
     if (!generated || !nonEmpty(generated.text)) throw new ConversationError('model returned an empty response');

@@ -1,10 +1,22 @@
 {
   "pages": [
     "pages/home/index",
+    "pages/featured/index",
     "pages/mine/index",
     "pages/watch/index",
     "pages/devtest/index"
   ],
+  "tabBar": {
+    "color": "#6f7a76",
+    "selectedColor": "#2aaa80",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/home/index", "text": "聊天" },
+      { "pagePath": "pages/featured/index", "text": "精选" },
+      { "pagePath": "pages/mine/index", "text": "我的" }
+    ]
+  },
   "window": {
     "navigationBarTitleText": "我在 MyAlly",
     "navigationBarBackgroundColor": "#ffffff",

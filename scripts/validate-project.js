@@ -8,6 +8,9 @@ const root = path.resolve(__dirname, '..');
 const required = [
   'project.config.json', 'project.config.example.json', 'miniprogram/app.json', 'miniprogram/app.ts',
   'miniprogram/pages/home/index.ts', 'miniprogram/pages/home/index.wxml',
+  'miniprogram/pages/featured/index.ts', 'miniprogram/pages/featured/index.wxml',
+  'miniprogram/pages/featured/index.wxss', 'miniprogram/pages/featured/index.json',
+  'miniprogram/data/tools.json', 'miniprogram/data/solutions.json', 'miniprogram/data/skills.json',
   'miniprogram/pages/mine/index.ts', 'miniprogram/pages/watch/index.ts',
   'cloudfunctions/entries/index.js', 'cloudfunctions/entries/domain.js',
   'packages/domain/index.js',
@@ -81,8 +84,13 @@ for (const file of ['cloudfunctions/entries/index.js', 'cloudfunctions/conversat
 }
 
 const app = JSON.parse(fs.readFileSync(path.join(root, 'miniprogram/app.json'), 'utf8'));
-for (const page of ['pages/home/index', 'pages/mine/index', 'pages/watch/index']) {
+for (const page of ['pages/home/index', 'pages/featured/index', 'pages/mine/index', 'pages/watch/index']) {
   if (!app.pages.includes(page)) throw new Error(`page not registered: ${page}`);
+}
+const tabPaths = ((app.tabBar && app.tabBar.list) || []).map((item) => item.pagePath);
+const expectedTabs = ['pages/home/index', 'pages/featured/index', 'pages/mine/index'];
+if (JSON.stringify(tabPaths) !== JSON.stringify(expectedTabs)) {
+  throw new Error(`tabBar must be exactly: ${expectedTabs.join(', ')}`);
 }
 
 const homeLogic = fs.readFileSync(path.join(root, 'miniprogram/pages/home/index.ts'), 'utf8');
@@ -91,5 +99,25 @@ if (!homeLogic.includes('retrySend(event)') || !homeLogic.includes('requestId: d
   throw new Error('failed conversation retry must preserve the original requestId');
 }
 if (!homeTemplate.includes('bindtap="retrySend"')) throw new Error('failed conversation retry control is missing');
+
+const skillsData = JSON.parse(fs.readFileSync(path.join(root, 'miniprogram/data/skills.json'), 'utf8'));
+if (!Array.isArray(skillsData) || skillsData.length !== 12) throw new Error('skills.json must contain exactly 12 built-in skills');
+for (const skill of skillsData) {
+  for (const field of ['id', 'name', 'emoji', 'oneLiner', 'welcomeMessage', 'systemPrompt']) {
+    if (typeof skill[field] !== 'string' || !skill[field].trim()) throw new Error(`skill ${skill.id || '?'} missing field: ${field}`);
+  }
+  if (!Array.isArray(skill.tags) || skill.tags.length < 1 || skill.tags.length > 2) throw new Error(`skill ${skill.id} must have 1-2 tags`);
+}
+
+const featuredLogic = fs.readFileSync(path.join(root, 'miniprogram/pages/featured/index.ts'), 'utf8');
+if (!featuredLogic.includes('globalData.pendingSkill') || !featuredLogic.includes("wx.switchTab")) {
+  throw new Error('featured skill cards must stash pendingSkill and switchTab to home');
+}
+const homeSourceForSkill = fs.readFileSync(path.join(root, 'miniprogram/pages/home/index.ts'), 'utf8');
+if (!homeSourceForSkill.includes('pendingSkill') || !homeSourceForSkill.includes('skillPrompt')) {
+  throw new Error('home page must consume pendingSkill and send skillPrompt');
+}
+const appSource = fs.readFileSync(path.join(root, 'miniprogram/app.ts'), 'utf8');
+if (!appSource.includes('pendingSkill')) throw new Error('app globalData must declare pendingSkill');
 
 console.log(`project validation passed: ${required.length} required files, ${app.pages.length} pages`);

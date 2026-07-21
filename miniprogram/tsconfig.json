@@ -5,6 +5,8 @@
     "module": "CommonJS",
     "types": ["miniprogram-api-typings"],
     "allowJs": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
     "noImplicitAny": false,
     "useUnknownInCatchVariables": false,
     "skipLibCheck": true

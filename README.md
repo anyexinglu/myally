@@ -35,7 +35,9 @@
 - `private/shared`授权状态；
 - “守望”照护者只读取主动分享的类型和摘要，不读取原文/文件；
 - 照护者权限由云函数`ADMIN_OPENIDS`环境变量控制；
-- 首页、我的记录、守望三页已统一为白底＋薄荷绿视觉，采用轻卡片、圆角输入区和胶囊式底部导航；
+- 首页、我的记录、守望三页已统一为白底＋薄荷绿视觉，采用轻卡片、圆角输入区；
+- 已切换为原生 tabBar 三 tab：聊天（home）/ 精选（featured）/ 我的（mine），纯文字无图标；watch、devtest 保留为注册页面但不进 tabBar，跨 tab 跳转统一使用 `wx.switchTab`；
+- 「精选」tab 为原生 TypeScript 页面：顶部 segment 切换「技能」与「信息」。技能板块为内置技能专区（参考腾讯元宝专家列表的 2 列宫格：emoji 头像、名称、一句话简介、标签 chips），数据为仓库手工编写的 `skills.json`（12 个技能，含 `welcomeMessage` 与 100-200 字 `systemPrompt`）；点击技能卡片经 `getApp().globalData.pendingSkill` 暂存后 `wx.switchTab` 进聊天，聊天页 `onShow` 插入技能开场白（本地 assistant 消息，不落库）并激活角色，之后每条消息在 payload 携带 `skillPrompt`，服务端校验（≤1000 字）后作为系统提示词角色设定块注入模型调用，不落库、不进记忆观察器、不改变工具白名单；进入临时对话模式时清除激活技能。信息板块保留原场景方案卡片（标题、适用人群、点击展开/收起分步步骤）；`tools.json` 仍保留在 `miniprogram/data/` 但不再被页面引用；
 - Node领域测试和项目结构/TypeScript检查。
 
 ## 本地验证
@@ -45,9 +47,15 @@ npm install
 npm run verify
 ```
 
-最近实测（2026-07-18）：36/36领域、契约、部署清单与云函数入口集成测试全部通过，26个必需文件结构检查、部署副本一致性和TypeScript检查通过。云函数入口测试用纯内存仿CloudBase SDK加载实际部署文件，覆盖服务端OPENID、消息落库、模型回复、Observation/Profile Item、第二轮记忆注入、相同显式偏好去重、另一账号隔离、缺集合安全失败及Node.js 16兼容入口。真实CloudBase的`conversations`超时调整为60秒后，严格评测确认：首轮建立1条记忆，第二轮召回2条既有测试记忆并影响回答，临时模式回复且`memoryStatus=skipped`，`current_time`工具调用状态为`ok`；“我的空间”也显示真实已确认画像。重复评测留下的两条旧测试画像未擅自删除；新增去重逻辑会保留Observation审计记录但不再为完全相同的显式偏好创建重复Profile Item，且已重新部署。
+最近实测（2026-07-18）：36/36领域、契约、部署清单与云函数入口集成测试全部通过，26个必需文件结构检查、部署副本一致性和TypeScript检查通过。
+
+精选 tab 实测（2026-07-21）：`npm run check` 通过（32 个必需文件结构检查、5 个注册页面、tabBar 三项断言、TypeScript 检查含 JSON import）；`npm run demo` 与 `npm run demo:agent` 通过；`npx openspec validate featured-tab-and-native-tabbar --strict` 通过；`npm test` 为 51/53，其中 2 个失败用例位于 `tests/release-hardening.test.js`，属于尚未实施的活跃 change `release-review-hardening` 的先行红灯断言（要求 about 页、移除 watch/devtest、AI 生成标识），在未改动的代码基线上同样失败，与本次改动无关。微信开发者工具中的三 tab 视觉与真机点击仍需人工复查，未计为视觉验收通过。云函数入口测试用纯内存仿CloudBase SDK加载实际部署文件，覆盖服务端OPENID、消息落库、模型回复、Observation/Profile Item、第二轮记忆注入、相同显式偏好去重、另一账号隔离、缺集合安全失败及Node.js 16兼容入口。真实CloudBase的`conversations`超时调整为60秒后，严格评测确认：首轮建立1条记忆，第二轮召回2条既有测试记忆并影响回答，临时模式回复且`memoryStatus=skipped`，`current_time`工具调用状态为`ok`；“我的空间”也显示真实已确认画像。重复评测留下的两条旧测试画像未擅自删除；新增去重逻辑会保留Observation审计记录但不再为完全相同的显式偏好创建重复Profile Item，且已重新部署。
+
+技能专区实测（2026-07-21）：`npm run check` 通过（33 个必需文件、skills.json 12 技能字段断言、pendingSkill/skillPrompt 链路断言、TypeScript 检查）；`npm test` 为 53/55，新增的 2 个用例覆盖 skillPrompt 超长拒绝、系统提示词注入块仅在场时出现、透传 agent 且不落库，2 个失败用例仍是上述与本次无关的 release-hardening 先行红灯；`npm run demo`、`npm run demo:agent` 通过；`npx openspec validate featured-skill-zone --strict` 通过。**注意：`conversations` 云函数已改动（normalizeInput/注入链），真实环境需重新部署后技能角色才会生效；未部署时旧函数静默忽略 skillPrompt，行为退化为普通聊天，不报错。** 宫格视觉、点击进聊天、开场白展示与角色化回答的开发者工具/真机复查尚未进行，不计为视觉验收通过。
 
 首页安全区修复（2026-07-17）：顶部根据微信胶囊位置动态计算起点，“私密对话 / 临时对话”改为胶囊左侧的轻量状态入口；输入框按底部导航高度和`safe-area-inset-bottom`定位，导航使用`border-box`避免实际高度超出声明值。本轮`npm run verify`通过，开发者工具可识别新版页面节点且问题面板为0；本机ScreenCaptureKit在复查时启动失败，因此仍需以开发者工具模拟器或真机截图完成最终视觉留档。
+
+底部导航切换（2026-07-21）：自绘胶囊导航已随原生 tabBar 移除，首页输入框 `composer-zone` 改为 `bottom: 0` 贴合原生 tabBar 上沿（tab 页视口自动排除 tabBar 高度），消息列表 `calc(100vh - 212rpx)` 无需改动。
 
 ## 微信开发者工具接入
 

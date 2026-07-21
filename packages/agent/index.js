@@ -23,7 +23,7 @@ class AgentOrchestrator {
     this.maxSteps = Math.max(1, Math.min(Number(maxSteps) || 3, 3));
   }
 
-  async run({ ownerId, input, history = [], memoryItems = [], temporary = false }) {
+  async run({ ownerId, input, history = [], memoryItems = [], temporary = false, skillPrompt = '' }) {
     const inputText = String(input && input.text || '');
     const capability = this.router.route(inputText);
     const skill = this.skills.get(capability) || this.skills.get('general');
@@ -35,7 +35,7 @@ class AgentOrchestrator {
         ownerId, capability, skill, history, input, memoryItems,
         memoryContext: memoryItems.map((item) => ({ id: item.id, type: item.type, value: item.value })),
         availableTools: this.tools.list(), toolResults: structuredClone(toolResults), step, maxSteps: this.maxSteps,
-        temporary,
+        temporary, skillPrompt,
       }));
       if (decision.type === 'final') {
         return { text: decision.text, capability, skillVersion: skill.version, toolCalls, usedMemoryIds: memoryItems.map((item) => item.id) };

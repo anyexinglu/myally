@@ -62,11 +62,6 @@
     </view>
   </view>
 
-  <view class="bottom-nav">
-    <view class="nav-item" bindtap="goHome"><text class="nav-icon">⌂</text><text class="nav-label">首页</text></view>
-    <view class="nav-item active"><text class="nav-icon">▤</text><text class="nav-label">我的</text></view>
-  </view>
-
   <view class="dev-tools" bindtap="goDevTest">
     <text class="hint" style="text-align:center;display:block;padding:12px;color:#555;">⚙ 开发者测试</text>
   </view>

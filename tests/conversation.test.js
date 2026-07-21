@@ -162,3 +162,50 @@ test('CloudBase model adapter routes fast, reasoner, multimodal, and observer wo
   await adapter.extractMemories({ text: '虚构偏好' });
   assert.deepEqual(calls, ['fast-model', 'reasoner-model', 'vision-model', 'observer-model']);
 });
+
+test('skillPrompt is validated and injected into the agent system prompt only when present', async () => {
+  const { service } = fixture();
+  await assert.rejects(
+    () => service.send('alice', { type: 'text', text: '你好', requestId: 'skill-too-long', skillPrompt: '长'.repeat(1001) }),
+    ValidationError,
+  );
+
+  const seenPrompts = [];
+  const ai = {
+    createModel() {
+      return {
+        async generateText(input) {
+          seenPrompts.push(input.messages[0].content);
+          return { text: '{"type":"final","text":"收到"}' };
+        },
+      };
+    },
+  };
+  const adapter = new CloudBaseModelAdapter({ ai });
+  const common = {
+    capability: 'general', skill: { version: '1.0.0', instructions: '测试' },
+    history: [], memoryItems: [], availableTools: [], toolResults: [], step: 1, maxSteps: 3,
+  };
+  await adapter.next({ ...common, input: { text: '本周做了三件事' }, skillPrompt: '你是一位资深职场周报助手。' });
+  await adapter.next({ ...common, input: { text: '普通聊天' } });
+  assert.match(seenPrompts[0], /本轮角色设定（来自用户选择的内置技能/);
+  assert.match(seenPrompts[0], /资深职场周报助手/);
+  assert.doesNotMatch(seenPrompts[1], /本轮角色设定/);
+});
+
+test('conversation service forwards skillPrompt to the agent without storing it as a user fact', async () => {
+  let agentInput = null;
+  const repository = new InMemoryMessageRepository();
+  const service = new ConversationService({
+    repository,
+    agent: { run: async (args) => { agentInput = args; return { text: '技能回复', capability: 'general', skillVersion: '1.0.0' }; } },
+    idFactory: () => `id-${Math.random().toString(36).slice(2, 10)}`,
+  });
+  const turn = await service.send('alice', {
+    type: 'text', text: '帮我写周报', requestId: 'skill-forward', skillPrompt: '你是一位资深职场周报助手。',
+  });
+  assert.equal(agentInput.skillPrompt, '你是一位资深职场周报助手。');
+  assert.equal(turn.userMessage.text, '帮我写周报');
+  assert.equal(turn.userMessage.provenance.memoryEligible, true);
+  assert.equal(JSON.stringify(turn).includes('资深职场周报助手'), false);
+});

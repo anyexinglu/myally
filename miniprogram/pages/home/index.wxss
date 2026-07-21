@@ -30,7 +30,7 @@
 .thinking { align-items: center; display: flex; gap: 8rpx; padding: 14rpx 0; }
 .thinking text { background: #96ded0; border-radius: 50%; height: 9rpx; width: 9rpx; }
 .scroll-spacer { height: 360rpx; }
-.composer-zone { bottom: calc(144rpx + env(safe-area-inset-bottom)); left: 30rpx; position: fixed; right: 30rpx; z-index: 60; }
+.composer-zone { bottom: 0; left: 30rpx; position: fixed; right: 30rpx; z-index: 60; }
 .selected-image { background: #fff; border: 1rpx solid #e7efec; border-radius: 22rpx; box-shadow: 0 10rpx 30rpx rgba(31,72,59,.08); height: 150rpx; margin: 0 0 12rpx 14rpx; padding: 10rpx; position: relative; width: 150rpx; }
 .selected-image image { border-radius: 15rpx; height: 100%; width: 100%; }
 .remove-image { align-items: center; background: #26312d; border: 4rpx solid #fff; border-radius: 50%; color: #fff; display: flex; font-size: 25rpx; height: 38rpx; justify-content: center; position: absolute; right: -10rpx; top: -10rpx; width: 38rpx; }

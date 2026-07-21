@@ -58,9 +58,4 @@
       <button class="send-button {{text || selectedImage ? 'ready' : ''}}" disabled="{{sending || (!text && !selectedImage)}}" bindtap="send">↑</button>
     </view>
   </view>
-
-  <view class="bottom-nav">
-    <view class="nav-item active"><text class="nav-icon">⌂</text><text class="nav-label">首页</text></view>
-    <view class="nav-item" bindtap="goMine"><text class="nav-icon">▤</text><text class="nav-label">我的</text></view>
-  </view>
 </view>

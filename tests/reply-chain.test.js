@@ -23,6 +23,8 @@ test('voice recognition waits for recording completion and reuses the conversati
   assert.match(home, /recorder\.onStop\(this\._recorderStopHandler\)/);
   assert.match(home, /recorder\.onError\(this\._recorderErrorHandler\)/);
   assert.doesNotMatch(home, /recorder\.on(?:Stop|Error)\s*=/);
+  assert.match(home, /onUnload\(\)[\s\S]*this\.endRecording\(\)[\s\S]*this\.clearVoiceCallbacks\(\)/);
+  assert.match(home, /finally\s*\{\s*this\.clearVoiceCallbacks\(\)/);
   assert.match(home, /name:\s*'asr'/);
   assert.match(home, /await this\.send\(\)/);
   assert.match(home, /录音上传超时，请改用文字输入/);

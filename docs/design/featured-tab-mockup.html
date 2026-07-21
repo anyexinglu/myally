@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>我在·精选 设计稿</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif; }
+  body { background:#e8e8e8; display:flex; justify-content:center; gap:40px; padding:30px; flex-wrap:wrap; }
+  .phone { width:375px; background:#f7faf9; border-radius:36px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,.25); border:8px solid #1a1a1a; }
+  .nav { background:#fff; padding:14px 16px 10px; text-align:center; font-size:17px; font-weight:600; border-bottom:1px solid #f0f0f0; position:relative; }
+  .nav .capsule { position:absolute; right:12px; top:16px; width:70px; height:24px; border:1px solid #e5e5e5; border-radius:12px; display:flex; align-items:center; justify-content:space-evenly; color:#666; font-size:12px; }
+  .segment { display:flex; background:#fff; padding:8px 16px 10px; gap:10px; }
+  .seg-btn { flex:1; text-align:center; padding:9px 0; border-radius:20px; font-size:15px; color:#666; background:#f2f4f3; }
+  .seg-btn.active { background:#0E9F8A; color:#fff; font-weight:600; }
+  .scroll { padding:12px 14px 8px; height:560px; overflow:hidden; }
+  .section-tip { font-size:13px; color:#999; margin:2px 4px 10px; }
+  .card { background:#fff; border-radius:14px; padding:14px 14px 12px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,.05); }
+  .tool-head { display:flex; align-items:center; gap:10px; }
+  .tool-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff; font-weight:700; flex-shrink:0; }
+  .tool-name { font-size:16px; font-weight:600; }
+  .tool-liner { font-size:13px; color:#888; margin-top:2px; }
+  .tags { display:flex; gap:6px; margin:10px 0; flex-wrap:wrap; }
+  .tag { font-size:11px; padding:3px 8px; border-radius:8px; }
+  .tag.dif { background:#fff3e8; color:#e8833a; }
+  .tag.free { background:#e8f7f4; color:#0E9F8A; }
+  .tag.scene { background:#f0f2ff; color:#6a7fdb; }
+  .copy-btn { width:100%; text-align:center; padding:10px 0; background:#0E9F8A; color:#fff; border-radius:10px; font-size:14px; font-weight:600; }
+  .copy-btn.plain { background:#f2f4f3; color:#0E9F8A; }
+  .sol-title { font-size:16px; font-weight:600; }
+  .sol-aud { font-size:12px; color:#999; margin-top:3px; }
+  .steps { margin-top:10px; border-top:1px dashed #eee; padding-top:10px; }
+  .step { display:flex; gap:8px; font-size:13.5px; color:#444; margin-bottom:8px; line-height:1.5; }
+  .step-num { width:18px; height:18px; border-radius:50%; background:#0E9F8A; color:#fff; font-size:11px; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+  .expand { text-align:center; font-size:13px; color:#0E9F8A; padding-top:4px; }
+  .tabbar { display:flex; background:#fff; border-top:1px solid #eee; padding:8px 0 20px; }
+  .tab { flex:1; text-align:center; font-size:11px; color:#999; }
+  .tab .ico { font-size:22px; display:block; margin-bottom:2px; }
+  .tab.active { color:#0E9F8A; font-weight:600; }
+  .label { text-align:center; color:#666; font-size:14px; margin-top:10px; width:100%; }
+</style>
+</head>
+<body>
+
+<!-- 视图1：技能 -->
+<div>
+<div class="phone">
+  <div class="nav">精选 <div class="capsule">⋯ ⊙</div></div>
+  <div class="segment">
+    <div class="seg-btn active">🧰 技能</div>
+    <div class="seg-btn">📖 信息</div>
+  </div>
+  <div class="scroll">
+    <div class="section-tip">挑一个趁手的 AI 工具，复制官网就能用</div>
+    <div class="card">
+      <div class="tool-head">
+        <div class="tool-icon" style="background:#4b6bfb;">K</div>
+        <div><div class="tool-name">Kimi</div><div class="tool-liner">国产长文本助手，读文件、总结资料很稳</div></div>
+      </div>
+      <div class="tags"><span class="tag free">免费+付费</span><span class="tag dif">简单</span><span class="tag scene">写作</span><span class="tag scene">办公</span><span class="tag scene">学习</span></div>
+      <div class="copy-btn">📋 复制官网链接</div>
+    </div>
+    <div class="card">
+      <div class="tool-head">
+        <div class="tool-icon" style="background:#7c5cfc;">豆</div>
+        <div><div class="tool-name">豆包</div><div class="tool-liner">字节出品，语音聊天顺手，老人也能用</div></div>
+      </div>
+      <div class="tags"><span class="tag free">免费</span><span class="tag dif">简单</span><span class="tag scene">写作</span><span class="tag scene">生活</span></div>
+      <div class="copy-btn">📋 复制官网链接</div>
+    </div>
+    <div class="card">
+      <div class="tool-head">
+        <div class="tool-icon" style="background:#111;">C</div>
+        <div><div class="tool-name">Cursor</div><div class="tool-liner">程序员的 AI 编辑器，写代码效率翻倍</div></div>
+      </div>
+      <div class="tags"><span class="tag" style="background:#ffe8e8;color:#d44;">付费</span><span class="tag dif">进阶</span><span class="tag scene">编程</span></div>
+      <div class="copy-btn">📋 复制官网链接</div>
+    </div>
+  </div>
+  <div class="tabbar">
+    <div class="tab"><span class="ico">💬</span>聊天</div>
+    <div class="tab active"><span class="ico">✨</span>精选</div>
+    <div class="tab"><span class="ico">👤</span>我的</div>
+  </div>
+</div>
+<div class="label">视图一：技能（工具导航）</div>
+</div>
+
+<!-- 视图2：信息 -->
+<div>
+<div class="phone">
+  <div class="nav">精选 <div class="capsule">⋯ ⊙</div></div>
+  <div class="segment">
+    <div class="seg-btn">🧰 技能</div>
+    <div class="seg-btn active">📖 信息</div>
+  </div>
+  <div class="scroll">
+    <div class="section-tip">按你的场景照着做，一步步来</div>
+    <div class="card">
+      <div class="sol-title">👴 写给爸妈的 AI 入门</div>
+      <div class="sol-aud">适合：完全没接触过 AI 的长辈</div>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div>手机应用商店搜「豆包」下载，图标是橙色卡通</div>
+        <div class="step"><div class="step-num">2</div>打开后按住底部话筒直接说话，像发微信语音一样</div>
+        <div class="step"><div class="step-num">3</div>可以问：明天天气怎么样、红烧肉怎么做、帮我写一段生日祝福</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="sol-title">💼 上班族 10 分钟写周报</div>
+      <div class="sol-aud">适合：每周被周报折磨的人</div>
+      <div class="expand">▼ 点开看 4 步做法（用 Kimi / 元宝）</div>
+    </div>
+    <div class="card">
+      <div class="sol-title">✈️ 旅行 3 分钟做攻略</div>
+      <div class="sol-aud">适合：周末周边游、假期出行</div>
+      <div class="expand">▼ 点开看 4 步做法（用 夸克 / Kimi）</div>
+    </div>
+  </div>
+  <div class="tabbar">
+    <div class="tab"><span class="ico">💬</span>聊天</div>
+    <div class="tab active"><span class="ico">✨</span>精选</div>
+    <div class="tab"><span class="ico">👤</span>我的</div>
+  </div>
+</div>
+<div class="label">视图二：信息（场景方案）</div>
+</div>
+
+</body>
+</html>

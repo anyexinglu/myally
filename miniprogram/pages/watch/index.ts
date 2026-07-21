@@ -10,6 +10,6 @@ Page({
       this.setData({ denied: error.code === 'FORBIDDEN', error: error.code === 'FORBIDDEN' ? '' : (error.message || '加载失败') });
     } finally { this.setData({ loading: false }); }
   },
-  goHome() { wx.redirectTo({ url: '/pages/home/index' }); },
-  goMine() { wx.redirectTo({ url: '/pages/mine/index' }); },
+  goHome() { wx.switchTab({ url: '/pages/home/index' }); },
+  goMine() { wx.switchTab({ url: '/pages/mine/index' }); },
 });

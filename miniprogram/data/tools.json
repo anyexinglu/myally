@@ -1,0 +1,142 @@
+[
+  {
+    "id": "kimi",
+    "name": "Kimi",
+    "region": "cn",
+    "scenes": ["写作", "办公", "学习", "搜索"],
+    "oneLiner": "月之暗面出品，读长文档、做总结特别强，直接拖文件进去就能问。",
+    "url": "https://kimi.moonshot.cn",
+    "difficulty": "简单",
+    "free": "免费+付费"
+  },
+  {
+    "id": "doubao",
+    "name": "豆包",
+    "region": "cn",
+    "scenes": ["写作", "学习", "绘画", "搜索"],
+    "oneLiner": "字节跳动的AI助手，聊天问答全能，还能语音对话，长辈也好上手。",
+    "url": "https://www.doubao.com",
+    "difficulty": "简单",
+    "free": "免费"
+  },
+  {
+    "id": "yuanbao",
+    "name": "腾讯元宝",
+    "region": "cn",
+    "scenes": ["写作", "办公", "搜索"],
+    "oneLiner": "腾讯出品，接入DeepSeek，搜微信公众号文章特别方便。",
+    "url": "https://yuanbao.tencent.com",
+    "difficulty": "简单",
+    "free": "免费"
+  },
+  {
+    "id": "wenxiaoyan",
+    "name": "文小言",
+    "region": "cn",
+    "scenes": ["写作", "搜索", "学习"],
+    "oneLiner": "百度旗下AI助手（原文心一言），查中文资料、问生活问题很在行。",
+    "url": "https://yiyan.baidu.com",
+    "difficulty": "简单",
+    "free": "免费+付费"
+  },
+  {
+    "id": "qwen",
+    "name": "通义千问",
+    "region": "cn",
+    "scenes": ["写作", "办公", "编程", "学习"],
+    "oneLiner": "阿里巴巴的AI，写文档、做表格、写代码都能帮上忙。",
+    "url": "https://www.tongyi.com",
+    "difficulty": "简单",
+    "free": "免费"
+  },
+  {
+    "id": "jimeng",
+    "name": "即梦",
+    "region": "cn",
+    "scenes": ["绘画", "视频"],
+    "oneLiner": "字节出品的AI绘画和视频生成工具，用中文描述就能出图。",
+    "url": "https://jimeng.jianying.com",
+    "difficulty": "中等",
+    "free": "免费+付费"
+  },
+  {
+    "id": "kling",
+    "name": "可灵",
+    "region": "cn",
+    "scenes": ["视频", "绘画"],
+    "oneLiner": "快手出品的AI视频生成，一段文字就能变成短片，效果国内领先。",
+    "url": "https://klingai.kuaishou.com",
+    "difficulty": "中等",
+    "free": "免费+付费"
+  },
+  {
+    "id": "quark",
+    "name": "夸克",
+    "region": "cn",
+    "scenes": ["搜索", "学习", "办公"],
+    "oneLiner": "阿里旗下智能搜索App，AI总结、扫描、网盘一体，学生常用。",
+    "url": "https://www.quark.cn",
+    "difficulty": "简单",
+    "free": "免费+付费"
+  },
+  {
+    "id": "chatgpt",
+    "name": "ChatGPT",
+    "region": "global",
+    "scenes": ["写作", "学习", "编程", "搜索"],
+    "oneLiner": "OpenAI出品，全球最知名的AI助手，什么都能聊。",
+    "url": "https://chatgpt.com",
+    "difficulty": "简单",
+    "free": "免费+付费"
+  },
+  {
+    "id": "claude",
+    "name": "Claude",
+    "region": "global",
+    "scenes": ["写作", "编程", "办公"],
+    "oneLiner": "Anthropic出品，长文写作和代码能力很强，回答细腻。",
+    "url": "https://claude.ai",
+    "difficulty": "简单",
+    "free": "免费+付费"
+  },
+  {
+    "id": "gemini",
+    "name": "Gemini",
+    "region": "global",
+    "scenes": ["写作", "学习", "搜索", "视频"],
+    "oneLiner": "谷歌的AI助手，和安卓手机、谷歌全家桶配合顺畅。",
+    "url": "https://gemini.google.com",
+    "difficulty": "简单",
+    "free": "免费+付费"
+  },
+  {
+    "id": "cursor",
+    "name": "Cursor",
+    "region": "global",
+    "scenes": ["编程"],
+    "oneLiner": "AI代码编辑器，程序员效率神器，写代码像聊天一样。",
+    "url": "https://www.cursor.com",
+    "difficulty": "进阶",
+    "free": "免费+付费"
+  },
+  {
+    "id": "midjourney",
+    "name": "Midjourney",
+    "region": "global",
+    "scenes": ["绘画"],
+    "oneLiner": "AI绘画天花板，艺术感很强，需要付费订阅才能使用。",
+    "url": "https://www.midjourney.com",
+    "difficulty": "中等",
+    "free": "付费"
+  },
+  {
+    "id": "perplexity",
+    "name": "Perplexity",
+    "region": "global",
+    "scenes": ["搜索", "学习"],
+    "oneLiner": "AI搜索引擎，每个答案都带来源引用，查资料放心。",
+    "url": "https://www.perplexity.ai",
+    "difficulty": "简单",
+    "free": "免费+付费"
+  }
+]

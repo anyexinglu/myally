@@ -35,10 +35,41 @@ Page({
     sending: false, anchor: 'message-welcome', temporary: false, headerTop: 44,
     recording: false, recordingDuration: 0, swipeUp: false,
     streamingText: '', streamingMessageId: '',
+    activeSkill: null as null | { id: string; name: string; emoji: string; systemPrompt: string },
   },
+  _ready: null as Promise<void> | null,
   async onLoad() {
     this.syncChromeMetrics();
-    await this.loadNormalConversation();
+    this._ready = this.loadNormalConversation();
+    await this._ready;
+  },
+  onShow() {
+    this.applyPendingSkill();
+  },
+  // 精选页技能专区：消费 pendingSkill，插入技能开场白并激活角色预设；无 pendingSkill 时行为与现状一致
+  async applyPendingSkill() {
+    const app: any = getApp();
+    const skill = app && app.globalData ? app.globalData.pendingSkill : null;
+    if (!skill || !skill.systemPrompt) return;
+    app.globalData.pendingSkill = null;
+    try { if (this._ready) await this._ready; } catch (_) {}
+    const welcome = {
+      id: `skill-welcome-${skill.id}-${Date.now()}`, role: 'assistant', type: 'text',
+      text: skill.welcomeMessage, createdAt: '刚刚', fileId: '', pending: false,
+      memoryCount: 0, toolCalls: [],
+    };
+    this.setData({
+      activeSkill: { id: skill.id, name: skill.name, emoji: skill.emoji, systemPrompt: skill.systemPrompt },
+      messages: [...this.data.messages, welcome],
+      anchor: `message-${welcome.id}`,
+    });
+  },
+  onHide() {
+    if (this.data.recording) this.endRecording();
+  },
+  onUnload() {
+    this.endRecording();
+    this.clearVoiceCallbacks();
   },
   syncChromeMetrics() {
     try {
@@ -68,7 +99,7 @@ Page({
     if (this.data.sending) return;
     const temporary = !this.data.temporary;
     if (temporary) {
-      this.setData({ temporary: true, conversationId: '', messages: [TEMP_WELCOME], anchor: 'message-temp-welcome' });
+      this.setData({ temporary: true, conversationId: '', messages: [TEMP_WELCOME], anchor: 'message-temp-welcome', activeSkill: null });
     } else {
       this.setData({ temporary: false });
       await this.loadNormalConversation();
@@ -92,6 +123,7 @@ Page({
       id: `local-${id}`, role: 'user', type: localImage ? 'image' : 'text',
       text, fileId: localImage, localImage, uploadedFileId: '', requestId: id,
       conversationId: this.data.conversationId, temporary: this.data.temporary,
+      skillPrompt: this.data.activeSkill ? this.data.activeSkill.systemPrompt : '',
       createdAt: '刚刚', pending: true, failed: false,
     };
     const messages = [...this.data.messages, draft];
@@ -119,6 +151,7 @@ Page({
       const turn = await callConversation('send', { payload: {
         requestId: draft.requestId, conversationId: draft.conversationId,
         type: draft.type, text: draft.text, fileId: uploadedFileId, temporary: draft.temporary,
+        skillPrompt: draft.skillPrompt || '',
       } }) as any;
 
       // 流式展示：逐字显示助手回复
@@ -176,8 +209,7 @@ Page({
       this.setData({ sending: false });
     }
   },
-  goMine() { wx.redirectTo({ url: '/pages/mine/index' }); },
-  goWatch() { wx.redirectTo({ url: '/pages/watch/index' }); },
+  goMine() { wx.switchTab({ url: '/pages/mine/index' }); },
 
   // ======== 语音输入（微信风格） ========
   _recorder: null as any,
@@ -213,8 +245,8 @@ Page({
 
     try {
       const recorder = wx.getRecorderManager();
-      this._recorder = recorder;
       this.clearVoiceCallbacks();
+      this._recorder = recorder;
       this._voiceStopPromise = new Promise<string>((resolve, reject) => {
         this._resolveVoiceStop = resolve;
         this._rejectVoiceStop = reject;
@@ -296,6 +328,8 @@ Page({
     } catch (err: any) {
       wx.hideLoading();
       wx.showToast({ title: err.message || '识别失败，请再试一次', icon: 'none' });
+    } finally {
+      this.clearVoiceCallbacks();
     }
   },
 
@@ -314,5 +348,6 @@ Page({
     this._resolveVoiceStop = null;
     this._rejectVoiceStop = null;
     this._voiceStopPromise = null;
+    this._recorder = null;
   },
 });

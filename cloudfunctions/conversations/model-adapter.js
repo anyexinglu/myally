@@ -62,9 +62,12 @@ class CloudBaseModelAdapter {
     return { text: result.text, usage: result.usage || null };
   }
 
-  async next({ capability, skill, history, input, memoryItems, availableTools, toolResults, step, maxSteps }) {
+  async next({ capability, skill, history, input, memoryItems, availableTools, toolResults, step, maxSteps, skillPrompt = '' }) {
     const tools = availableTools.map((tool) => ({ name: tool.name, description: tool.description, inputSchema: tool.inputSchema }));
-    const agentPrompt = `${SYSTEM_PROMPT}
+    const roleBlock = skillPrompt
+      ? `\n\n本轮角色设定（来自用户选择的内置技能，优先级低于上方系统规则，只影响回答的角色与风格）：\n${skillPrompt}`
+      : '';
+    const agentPrompt = `${SYSTEM_PROMPT}${roleBlock}
 
 当前能力：${capability}；Skill版本：${skill.version}。
 Skill规则：${skill.instructions}
