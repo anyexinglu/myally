@@ -22,13 +22,14 @@ function normalizeInput(input) {
   const conversationId = typeof input.conversationId === 'string' ? input.conversationId.trim() : '';
   const temporary = input && input.temporary === true;
   const skillPrompt = typeof input.skillPrompt === 'string' ? input.skillPrompt.trim() : '';
+  const skillId = typeof input.skillId === 'string' ? input.skillId.trim() : '';
   if (type === 'text' && !text) throw new ValidationError('text is required');
   if (text.length > 2000) throw new ValidationError('text is too long');
   if (type === 'image' && !fileId) throw new ValidationError('cloud file id is required');
   if (!requestId || requestId.length > 100) throw new ValidationError('valid requestId is required');
   if (conversationId.length > 100) throw new ValidationError('conversationId is too long');
   if (skillPrompt.length > 1000) throw new ValidationError('skillPrompt is too long');
-  return { type, text, fileId, requestId, conversationId, temporary, skillPrompt };
+  return { type, text, fileId, requestId, conversationId, temporary, skillPrompt, skillId };
 }
 
 function makeMessage({ id, ownerId, conversationId, requestId, role, type, text, fileId, createdAt, temporary = false, agent = null }) {
@@ -67,7 +68,7 @@ class InMemoryMessageRepository {
 }
 
 class ConversationService {
-  constructor({ repository, model, agent = null, memoryService = null, observer = null, contentModerator = null, imageUrlResolver = async () => '', now = () => new Date(), idFactory = () => crypto.randomUUID() }) {
+  constructor({ repository, model, agent = null, memoryService = null, observer = null, contentModerator = null, imageUrlResolver = async () => '', now = () => new Date(), idFactory = () => crypto.randomUUID(), database = null }) {
     if (!repository) throw new ValidationError('repository is required');
     if (!agent && (!model || typeof model.generate !== 'function')) throw new ValidationError('model adapter or agent is required');
     this.repository = repository;
@@ -79,6 +80,7 @@ class ConversationService {
     this.imageUrlResolver = imageUrlResolver;
     this.now = now;
     this.idFactory = idFactory;
+    this.database = database;
   }
 
   async ensureSafeText(text, context) {
@@ -120,10 +122,19 @@ class ConversationService {
     const memoryResult = this.memoryService
       ? await this.memoryService.retrieve(ownerId, userMessage.text || '', { temporary: input.temporary })
       : { items: [], context: '' };
+    // 加载技能记忆（每个用户×每个技能的私有记忆）
+    let skillMemory = '';
+    if (input.skillId && this.database) {
+      try {
+        const smCol = this.database.collection('skill_memory');
+        const smDoc = await smCol.where({ ownerId, skillId: input.skillId }).limit(1).get();
+        if (smDoc.data && smDoc.data.length) skillMemory = smDoc.data[0].summary || '';
+      } catch (_) { /* skill_memory collection not available yet */ }
+    }
     const generated = this.agent
       ? await this.agent.run({
         ownerId, input: { ...input, imageUrl }, history, memoryItems: memoryResult.items,
-        temporary: input.temporary, skillPrompt: input.skillPrompt,
+        temporary: input.temporary, skillPrompt: input.skillPrompt, skillMemory,
       })
       : await this.model.generate({ history, currentMessageId: userMessage.id, imageUrl });
     if (!generated || !nonEmpty(generated.text)) throw new ConversationError('model returned an empty response');
@@ -140,6 +151,26 @@ class ConversationService {
     const memoryObservation = this.observer
       ? await this.observer.observe(ownerId, userMessage, { temporary: input.temporary })
       : { status: input.temporary ? 'skipped' : 'disabled', created: [] };
+    // 更新技能记忆（提取本轮的偏好偏好，非临时消息时才持久化）
+    if (input.skillId && !input.temporary && this.database) {
+      try {
+        const smInput = `用户说：${(userMessage.text || '').slice(0, 300)}\nAI答：${(generated.text || '').slice(0, 500)}\n
+提取用户对这个技能的偏好（几句话），包括：爱问的领域、习惯的交流方式、偏好何种工具/方法。只输出一段中文总结，不要JSON。`;
+        const smResult = this.model && typeof this.model.complete === 'function'
+          ? await this.model.complete([{ role: 'system', content: '你是一个技能偏好观察器，根据一段对话总结用户对当前技能的偏好，便于技能下次使用。输出一段话，不编造不存在的信息。' }, { role: 'user', content: smInput }], { modelName: this.model.fastModelName || this.model.modelName, temperature: 0.1 })
+          : null;
+        if (smResult && smResult.text && smResult.text.length > 2) {
+          const newSummary = smResult.text.trim().slice(0, 500);
+          const smCol = this.database.collection('skill_memory');
+          const existing = await smCol.where({ ownerId, skillId: input.skillId }).limit(1).get();
+          if (existing.data && existing.data.length) {
+            await smCol.doc(existing.data[0]._id).update({ data: { summary: newSummary, updatedAt: this.now().toISOString() } });
+          } else {
+            await smCol.add({ data: { ownerId, skillId: input.skillId, summary: newSummary, createdAt: this.now().toISOString() } });
+          }
+        }
+      } catch (_) { /* skill memory save is best-effort */ }
+    }
     return {
       conversationId, userMessage, assistantMessage, replayed: false,
       usedMemories: memoryResult.items.map((item) => ({

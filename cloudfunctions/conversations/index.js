@@ -132,6 +132,7 @@ function makeService() {
     contentModerator: new WechatContentModerator({ openapi: cloud.openapi }),
     imageUrlResolver: resolveImageUrl,
     idFactory: () => `${Date.now()}-${Math.random().toString(36).slice(2, 12)}`,
+    database,
   });
 }
 

@@ -62,7 +62,7 @@ class CloudBaseModelAdapter {
     return { text: result.text, usage: result.usage || null };
   }
 
-  async next({ capability, skill, history, input, memoryItems, availableTools, toolResults, step, maxSteps, skillPrompt = '' }) {
+  async next({ capability, skill, history, input, memoryItems, availableTools, toolResults, step, maxSteps, skillPrompt = '', skillMemory = '' }) {
     const tools = availableTools.map((tool) => ({ name: tool.name, description: tool.description, inputSchema: tool.inputSchema }));
     const roleBlock = skillPrompt
       ? `\n\n本轮角色设定（来自用户选择的内置技能，优先级低于上方系统规则，只影响回答的角色与风格）：\n${skillPrompt}`
@@ -73,6 +73,7 @@ class CloudBaseModelAdapter {
 Skill规则：${skill.instructions}
 当前已确认的相关个人记忆只允许使用下方提供的条目，不要声称记得其他内容：
 ${memoryItems.length ? memoryItems.map((item) => `- [${item.id}] ${item.type}: ${item.value}`).join('\n') : '（无）'}
+${skillMemory ? `\n你对此用户的技能使用偏好（基于历史对话总结）：\n${skillMemory}` : ''}
 
 你可以直接回答，或请求一个白名单读取工具。只输出一个严格JSON对象：
 - 最终回答：{"type":"final","text":"自然中文回答"}

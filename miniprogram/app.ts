@@ -12,4 +12,9 @@ App({
     if (!wx.cloud) throw new Error('请使用支持云开发的微信基础库');
     wx.cloud.init({ env: CLOUD_ENV_ID || undefined, traceUser: true });
   },
+  onShow() {
+    // 每次显示时检查是否有新版本（开发版上传后自动推送）
+    const updateManager = wx.getUpdateManager();
+    updateManager.onUpdateReady(() => { updateManager.applyUpdate(); });
+  },
 });

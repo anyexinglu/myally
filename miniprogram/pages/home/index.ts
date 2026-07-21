@@ -124,6 +124,7 @@ Page({
       text, fileId: localImage, localImage, uploadedFileId: '', requestId: id,
       conversationId: this.data.conversationId, temporary: this.data.temporary,
       skillPrompt: this.data.activeSkill ? this.data.activeSkill.systemPrompt : '',
+      skillId: this.data.activeSkill ? this.data.activeSkill.id : '',
       createdAt: '刚刚', pending: true, failed: false,
     };
     const messages = [...this.data.messages, draft];
@@ -152,6 +153,7 @@ Page({
         requestId: draft.requestId, conversationId: draft.conversationId,
         type: draft.type, text: draft.text, fileId: uploadedFileId, temporary: draft.temporary,
         skillPrompt: draft.skillPrompt || '',
+        skillId: draft.skillId || '',
       } }) as any;
 
       // 流式展示：逐字显示助手回复
