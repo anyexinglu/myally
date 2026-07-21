@@ -2,6 +2,7 @@
   "pages": [
     "pages/home/index",
     "pages/onboarding/index",
+    "pages/admin/index",
     "pages/featured/index",
     "pages/mine/index",
     "pages/watch/index",
