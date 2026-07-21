@@ -92,13 +92,13 @@ Page({
       };
       // 设定聊天背景（占卜师苏研专有古风背景）
       const bg = skill.id === 'fortune-teller'
-        ? 'url(../../assets/images/suyan-bg.jpg)'
+        ? 'fortune'
         : '';
       this.setData({
-      activeSkill: { id: skill.id, name: skill.name, emoji: skill.emoji, systemPrompt: skill.systemPrompt },
-      activeSkillBackground: bg,
-      messages: [...this.data.messages, welcome],
-      anchor: `message-${welcome.id}`,
+        activeSkill: { id: skill.id, name: skill.name, emoji: skill.emoji, systemPrompt: skill.systemPrompt },
+        activeSkillBackground: bg,
+        messages: [...this.data.messages, welcome],
+        anchor: `message-${welcome.id}`,
       });
   },
   onHide() {
@@ -262,21 +262,13 @@ Page({
 
   onVoiceStart(e: any) {
     if (this.data.sending) return;
-
-    // 先检查并请求录音权限
-    wx.authorize({
-      scope: 'scope.record',
-      success: () => this.startRecording(e),
-      fail: () => {
-        // 授权失败，尝试调起设置页让用户手动开启
-        wx.showModal({
-          title: '需要麦克风权限',
-          content: '请在设置中开启麦克风权限后使用语音输入。',
-          confirmText: '去设置',
-          success: (res) => { if (res.confirm) wx.openSetting(); },
-        });
-      },
-    });
+    // 直接尝试录音，不先 authorize（WEBVIEW 环境下 authorize 可能被拦截）
+    try {
+      this.setData({ voiceMode: false });
+      this.startRecording(e);
+    } catch (_) {
+      wx.showToast({ title: '录音不可用，请用文字输入', icon: 'none' });
+    }
   },
 
   startRecording(e: any) {
@@ -338,12 +330,24 @@ Page({
     const y = e.touches[0].clientY;
     this.setData({ swipeUp: this._startY - y > 80 });
   },
+  cancelRecording() {
+    // 取消录音：停止录音不清除，直接结束录音状态
+    this.endRecording();
+    wx.showToast({ title: '已取消', icon: 'none' });
+  },
   onRecordingTap() {
     // 录音状态下点击录音条→触发结束并发送（兜底 touchend 不触发的情况）
     this.onVoiceEnd();
   },
   toggleVoiceMode() {
     this.setData({ voiceMode: !this.data.voiceMode });
+  },
+  exitSkill() {
+    this.setData({
+      activeSkill: null,
+      activeSkillBackground: '',
+    });
+    wx.switchTab({ url: '/pages/home/index' });
   },
 
   async onVoiceEnd() {

@@ -1,7 +1,12 @@
 <view class="chat-page" style="padding-top: {{headerTop}}px;">
-  <view wx:if="{{activeSkillBackground}}" class="chat-bg" style="background-image:{{activeSkillBackground}}"></view>
+  <view wx:if="{{activeSkillBackground}}" class="chat-bg"></view>
+  <view wx:if="{{activeSkill && activeSkill.id === 'fortune-teller'}}" class="chat-bg-fortune"></view>
   <view class="chat-head">
-    <view class="brand-lockup"><text class="brand">我在</text><text class="brand-subtitle">MYALLY</text></view>
+    <view class="brand-lockup">
+      <text class="brand">{{activeSkill ? activeSkill.name : '我在'}}</text>
+      <text class="brand-subtitle">{{activeSkill ? '观微阁主' : 'MYALLY'}}</text>
+    </view>
+    <view wx:if="{{activeSkill}}" class="skill-exit" bindtap="exitSkill">✕</view>
     <view class="mode-control {{temporary ? 'temporary' : ''}}" bindtap="toggleTemporary">
       <text class="mode-dot"></text>
       <text>{{temporary ? '临时对话' : '私密对话'}}</text>
@@ -14,7 +19,7 @@
     <view class="day-label">今天</view>
     <block wx:for="{{messages}}" wx:key="id">
       <view id="message-{{item.id}}" class="message-row {{item.role === 'user' ? 'from-user' : 'from-ally'}}">
-        <view wx:if="{{item.role === 'assistant'}}" class="avatar">我</view>
+        <view wx:if="{{item.role === 'assistant'}}" class="avatar {{activeSkill ? 'skill-avatar' : ''}}">{{activeSkill && activeSkill.emoji || '我'}}</view>
         <view class="message-stack">
           <view class="bubble {{item.role === 'user' ? 'user-bubble' : 'ally-bubble'}}">
             <image wx:if="{{item.type === 'image' && item.fileId}}" class="message-image" src="{{item.fileId}}" mode="aspectFill" />
@@ -39,14 +44,22 @@
   <view class="composer-zone">
     <view wx:if="{{selectedImage}}" class="selected-image"><image src="{{selectedImage}}" mode="aspectFill" /><view class="remove-image" bindtap="clearImage">×</view></view>
     
-    <!-- 录音状态（微信风格） -->
-    <view wx:if="{{recording}}" class="recording-bar" bindtap="onRecordingTap">
-      <view class="recording-inner">
-        <view class="recording-mic {{swipeUp ? 'cancel' : ''}}">
-          <text class="recording-icon">{{swipeUp ? '↩' : '🎤'}}</text>
+    <!-- 录音状态（微信风格全屏覆盖） -->
+    <view wx:if="{{recording}}" class="recording-overlay" bindtap="onRecordingTap">
+      <view class="rec-top">
+        <view class="rec-btn cancel-btn" bindtap="cancelRecording">取消</view>
+        <view class="rec-btn trans-btn">转文字</view>
+      </view>
+      <view class="rec-center">
+        <view class="waveform">
+          <view wx:for="{{5}}" wx:key="*this" class="wave-bar" style="animation-delay: -{{item * 0.15}}s"></view>
         </view>
-        <text class="recording-label">{{swipeUp ? '松开取消' : '松开 发送'}}</text>
-        <text class="recording-time">{{recordingDuration}}″</text>
+        <text class="rec-dur">{{recordingDuration}}″</text>
+      </view>
+      <view class="rec-bottom {{swipeUp ? 'cancel' : ''}}">
+        <view class="rec-send-arc">
+          <text class="rec-send-text">{{swipeUp ? '松开取消' : '松开 发送'}}</text>
+        </view>
       </view>
     </view>
 
@@ -60,7 +73,7 @@
       <input wx:else class="chat-input" maxlength="2000" confirm-type="send" placeholder="{{temporary ? '临时说说…' : '跟我说说…'}}" placeholder-class="chat-placeholder" value="{{text}}" bindinput="onText" bindconfirm="send" />
       <!-- 语音/键盘切换 -->
       <view class="voice-toggle" bindtap="toggleVoiceMode">
-        <text class="voice-toggle-icon">{{voiceMode ? '⌨️' : '🎤'}}</text>
+        <text class="voice-toggle-icon">{{voiceMode ? '⌨' : '🎤'}}</text>
       </view>
       <button class="send-button {{text || selectedImage ? 'ready' : ''}}" disabled="{{sending || (!text && !selectedImage)}}" bindtap="send">↑</button>
     </view>
