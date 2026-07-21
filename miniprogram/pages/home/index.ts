@@ -36,6 +36,7 @@ Page({
     recording: false, recordingDuration: 0, swipeUp: false,
     streamingText: '', streamingMessageId: '',
     activeSkill: null as null | { id: string; name: string; emoji: string; systemPrompt: string },
+    activeSkillBackground: '',
   },
   _ready: null as Promise<void> | null,
   async onLoad() {
@@ -87,12 +88,17 @@ Page({
       id: `skill-welcome-${skill.id}-${Date.now()}`, role: 'assistant', type: 'text',
       text: skill.welcomeMessage, createdAt: '刚刚', fileId: '', pending: false,
       memoryCount: 0, toolCalls: [],
-    };
-    this.setData({
+      };
+      // 设定聊天背景（占卜师苏研专有古风背景）
+      const bg = skill.id === 'fortune-teller'
+      ? 'linear-gradient(180deg, #2c1810 0%, #4a3228 30%, #6b4c3b 60%, #8b6914 100%)'
+      : '';
+      this.setData({
       activeSkill: { id: skill.id, name: skill.name, emoji: skill.emoji, systemPrompt: skill.systemPrompt },
+      activeSkillBackground: bg,
       messages: [...this.data.messages, welcome],
       anchor: `message-${welcome.id}`,
-    });
+      });
   },
   onHide() {
     if (this.data.recording) this.endRecording();

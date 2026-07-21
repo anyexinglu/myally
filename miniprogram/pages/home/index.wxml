@@ -1,4 +1,5 @@
 <view class="chat-page" style="padding-top: {{headerTop}}px;">
+  <view wx:if="{{activeSkillBackground}}" class="chat-bg" style="background-image:{{activeSkillBackground}}"></view>
   <view class="chat-head">
     <view class="brand-lockup"><text class="brand">我在</text><text class="brand-subtitle">MYALLY</text></view>
     <view class="mode-control {{temporary ? 'temporary' : ''}}" bindtap="toggleTemporary">

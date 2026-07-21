@@ -19,8 +19,8 @@
 
 .segment-item.active {
   background: #ffffff;
-  box-shadow: 0 6rpx 18rpx rgba(34, 83, 68, .08);
-  color: #1d2925;
+  color: #1a1a1a;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.08);
 }
 
 .section-hint { display: block; margin: 0 4rpx 20rpx; }

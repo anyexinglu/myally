@@ -53,14 +53,15 @@
 }
 .option-item.selected {
   border-color: #07c160;
-  background: #f0faf4;
+  background: #07c160;
+  color: #fff;
 }
 .option-label {
   font-size: 28rpx;
   color: #333;
 }
 .check-mark {
-  color: #07c160;
+  color: #fff;
   font-size: 32rpx;
   font-weight: bold;
 }
