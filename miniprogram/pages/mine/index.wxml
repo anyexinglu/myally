@@ -65,4 +65,7 @@
   <view class="dev-tools" bindtap="goDevTest">
     <text class="hint" style="text-align:center;display:block;padding:12px;color:#555;">⚙ 开发者测试</text>
   </view>
+  <view class="dev-tools" bindtap="goDebug">
+    <text class="hint" style="text-align:center;display:block;padding:12px;color:#07c160;">🧪 调试模式</text>
+  </view>
 </view>

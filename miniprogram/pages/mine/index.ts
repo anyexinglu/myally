@@ -50,4 +50,5 @@ Page({
   goHome() { wx.switchTab({ url: '/pages/home/index' }); },
   goWatch() { wx.redirectTo({ url: '/pages/watch/index' }); },
   goDevTest() { wx.navigateTo({ url: '/pages/devtest/index' }); },
+  goDebug() { wx.navigateTo({ url: '/pages/admin/index' }); },
 });

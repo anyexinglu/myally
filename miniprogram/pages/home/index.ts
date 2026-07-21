@@ -39,6 +39,12 @@ Page({
   },
   _ready: null as Promise<void> | null,
   async onLoad() {
+    // 调试模式：跳过真实 profile 检查，直接弹出问卷
+    const isDebug = !!wx.getStorageSync('debug_onboard');
+    if (isDebug && !wx.getStorageSync('debug_profile')) {
+      wx.redirectTo({ url: '/pages/onboarding/index' });
+      return;
+    }
     // 首次进入检查是否已填用户画像，未填则跳转到 onboarding
     // 来自技能跳转时不触发（已选技能说明已有交互）
     const isFromSkill = (() => {

@@ -1,19 +1,9 @@
-.container { padding: 24rpx; background: #f5f7fa; min-height: 100vh; }
-.section { background: #fff; border-radius: 16rpx; padding: 28rpx; margin-bottom: 24rpx; }
-.section-title { font-size: 30rpx; font-weight: 600; color: #1a1a1a; display: block; margin-bottom: 8rpx; }
-.section-desc { font-size: 24rpx; color: #999; display: block; margin-bottom: 24rpx; }
-.field { margin-bottom: 24rpx; }
-.field-label { font-size: 26rpx; color: #666; display: block; margin-bottom: 12rpx; }
-.picker-value { padding: 20rpx 24rpx; background: #f5f7fa; border-radius: 8rpx; font-size: 28rpx; color: #333; }
-.checkbox-group { display: flex; flex-wrap: wrap; gap: 12rpx; }
-.checkbox-item { padding: 14rpx 24rpx; border: 2rpx solid #ddd; border-radius: 20rpx; font-size: 26rpx; color: #666; background: #fafafa; }
-.checkbox-item.checked { border-color: #07c160; color: #07c160; background: #f0faf4; }
-.skill-preview { display: flex; flex-wrap: wrap; gap: 16rpx; margin-top: 16rpx; }
-.skill-card { display: flex; align-items: center; gap: 12rpx; padding: 20rpx; border: 2rpx solid #eee; border-radius: 12rpx; width: calc(50% - 8rpx); box-sizing: border-box; background: #fafafa; }
-.skill-emoji { font-size: 36rpx; }
-.skill-name { font-size: 26rpx; color: #333; flex: 1; }
-.matched-tag { font-size: 20rpx; color: #07c160; background: #f0faf4; padding: 4rpx 10rpx; border-radius: 6rpx; }
-.actions { margin-top: 16rpx; padding-bottom: 48rpx; }
-.btn { height: 88rpx; line-height: 88rpx; border-radius: 12rpx; font-size: 30rpx; margin-bottom: 16rpx; border: none; }
-.btn-save { background: #07c160; color: #fff; }
-.btn-reset { background: #fff; color: #666; border: 2rpx solid #ddd; }
+.container { padding: 32rpx; background: #f5f7fa; min-height: 100vh; }
+.card { background: #fff; border-radius: 16rpx; padding: 32rpx; }
+.title { font-size: 34rpx; font-weight: 600; color: #1a1a1a; display: block; margin-bottom: 16rpx; }
+.desc { font-size: 26rpx; color: #666; line-height: 1.6; display: block; margin-bottom: 32rpx; }
+.switch-row { display: flex; align-items: center; justify-content: space-between; padding: 16rpx 0; }
+.switch-label { font-size: 28rpx; color: #333; }
+.debug-actions { margin-top: 32rpx; padding-top: 32rpx; border-top: 2rpx solid #eee; }
+.btn { height: 88rpx; line-height: 88rpx; border-radius: 12rpx; font-size: 30rpx; background: #07c160; color: #fff; border: none; margin-bottom: 16rpx; }
+.hint { font-size: 24rpx; color: #999; line-height: 1.5; display: block; }

@@ -79,6 +79,15 @@ Page({
     }
   },
   submitAnswers() {
+    const isDebug = !!wx.getStorageSync('debug_onboard');
+    if (isDebug) {
+      // 调试模式：存本地，不影响真实数据
+      wx.setStorageSync('debug_profile', this.data.answers);
+      wx.showToast({ title: '预览数据已保存', icon: 'success' });
+      // 跳转精选页预览效果
+      wx.switchTab({ url: '/pages/featured/index' });
+      return;
+    }
     wx.showLoading({ title: '保存中…' });
     wx.cloud.callFunction({
       name: 'conversations',

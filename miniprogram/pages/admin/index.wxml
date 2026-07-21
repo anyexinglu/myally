@@ -1,57 +1,16 @@
 <view class="container">
-  <!-- 当前模拟画像 -->
-  <view class="section">
-    <text class="section-title">👤 模拟用户画像</text>
-    <text class="section-desc">修改后下方实时预览精选页技能排序</text>
+  <view class="card">
+    <text class="title">🧪 调试模式</text>
+    <text class="desc">开启后，你的真实画像和记忆不受任何影响，所有操作只存在本地。关闭调试后自动恢复。</text>
 
-    <view class="field">
-      <text class="field-label">年龄段</text>
-      <picker mode="selector" range="{{ageOptions}}" bindchange="onAgeChange">
-        <view class="picker-value">{{ageLabel}}</view>
-      </picker>
+    <view class="switch-row">
+      <text class="switch-label">调试模式</text>
+      <switch checked="{{debugOn}}" bindchange="toggleDebug" color="#07c160"/>
     </view>
 
-    <view class="field">
-      <text class="field-label">身份（多选）</text>
-      <view class="checkbox-group">
-        <label wx:for="{{roleOptions}}" wx:key="id" class="checkbox-item {{selRoles.includes(item.id)?'checked':''}}" bindtap="toggleRole" data-id="{{item.id}}">
-          <text>{{item.label}}</text>
-        </label>
-      </view>
+    <view wx:if="{{debugOn}}" class="debug-actions">
+      <button class="btn" bindtap="startOnboarding">🔄 重置为新人体验</button>
+      <text class="hint">点此按钮后，下次进入小程序会弹出新人问卷。填完问卷后可在精选页预览各 tab 的效果。关闭调试后一切恢复。</text>
     </view>
-
-    <view class="field" wx:if="{{selRoles.includes('parent')}}">
-      <text class="field-label">孩子年龄</text>
-      <picker mode="selector" range="{{kidAgeOptions}}" bindchange="onKidAgeChange">
-        <view class="picker-value">{{kidAgeLabel}}</view>
-      </picker>
-    </view>
-
-    <view class="field">
-      <text class="field-label">感兴趣方向（多选）</text>
-      <view class="checkbox-group">
-        <label wx:for="{{interestOptions}}" wx:key="id" class="checkbox-item {{selInterests.includes(item.id)?'checked':''}}" bindtap="toggleInterest" data-id="{{item.id}}">
-          <text>{{item.label}}</text>
-        </label>
-      </view>
-    </view>
-  </view>
-
-  <!-- 技能排序预览 -->
-  <view class="section">
-    <text class="section-title">🎯 精选页技能排序预览</text>
-    <view class="skill-preview">
-      <view wx:for="{{previewSkills}}" wx:key="id" class="skill-card">
-        <text class="skill-emoji">{{item.emoji}}</text>
-        <text class="skill-name">{{item.name}}</text>
-        <text wx:if="{{item.matched}}" class="matched-tag">✓ 兴趣匹配</text>
-      </view>
-    </view>
-  </view>
-
-  <!-- 操作 -->
-  <view class="actions">
-    <button class="btn btn-save" bindtap="saveProfile">💾 保存到我的画像</button>
-    <button class="btn btn-reset" bindtap="loadMyProfile">🔄 重置为我的画像</button>
   </view>
 </view>
