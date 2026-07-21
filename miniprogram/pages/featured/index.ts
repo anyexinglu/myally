@@ -1,5 +1,5 @@
-import skillsData from '../../data/skills.json';
-import solutionsData from '../../data/solutions.json';
+import skillsData from '../../data/skills';
+import solutionsData from '../../data/solutions';
 
 Page({
   data: {

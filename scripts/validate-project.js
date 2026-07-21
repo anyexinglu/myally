@@ -10,7 +10,7 @@ const required = [
   'miniprogram/pages/home/index.ts', 'miniprogram/pages/home/index.wxml',
   'miniprogram/pages/featured/index.ts', 'miniprogram/pages/featured/index.wxml',
   'miniprogram/pages/featured/index.wxss', 'miniprogram/pages/featured/index.json',
-  'miniprogram/data/tools.json', 'miniprogram/data/solutions.json', 'miniprogram/data/skills.json',
+  'miniprogram/data/tools.json', 'miniprogram/data/solutions.ts', 'miniprogram/data/skills.ts',
   'miniprogram/pages/mine/index.ts', 'miniprogram/pages/watch/index.ts',
   'cloudfunctions/entries/index.js', 'cloudfunctions/entries/domain.js',
   'packages/domain/index.js',
