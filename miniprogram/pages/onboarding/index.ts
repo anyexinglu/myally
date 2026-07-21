@@ -1,4 +1,4 @@
-import questionsData from '../../data/onboarding-questions.json';
+import questionsData from '../../data/onboarding-questions';
 
 interface Answer {
   id: string;

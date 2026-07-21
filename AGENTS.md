@@ -110,3 +110,4 @@ skill_memory 读写、隔离、提取全部自动继承，无需改云函数。
 - 优先复用经过许可证和源码审计的开源思想/模块，不整套照搬未经验证的项目；
 - 修改后运行项目现有验证命令，并把真实结果更新到 README 或交接文档。
 - **三级自证纪律**：每次修复/功能改动后，必须按 L0(编译测试) → L1(automator行为自测) → L2(真机确认) 逐级验证，每级通过才能进入下一级。汇报时必须写出真实验证结果，不允许只说"已修复"。
+- **数据文件一律 .ts 禁止 .json import**：小程序 TS 项目关掉 useCompilerPlugins 后，工具不处理 `.json` import。所有数据文件（skills.json、solutions.json、onboarding-questions.json 等）必须用同名 .ts 文件 export default，import 时不带扩展名。新增数据文件时必须同时创建 .ts 版本。`.json` 只做数据源存储，不参与编译链。

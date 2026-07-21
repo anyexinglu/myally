@@ -1,0 +1,215 @@
+const questions = [
+  {
+    "id": "age",
+    "question": "你的年龄段",
+    "type": "single",
+    "options": [
+      {
+        "id": "youth",
+        "label": "18~25岁",
+        "tags": [
+          "学生",
+          "职场新人"
+        ]
+      },
+      {
+        "id": "young-adult",
+        "label": "26~35岁",
+        "tags": [
+          "职场主力",
+          "宝爸宝妈主力"
+        ]
+      },
+      {
+        "id": "midlife",
+        "label": "36~50岁",
+        "tags": [
+          "职场中坚",
+          "家庭支柱"
+        ]
+      },
+      {
+        "id": "senior",
+        "label": "50岁以上",
+        "tags": [
+          "长辈",
+          "退休"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "role",
+    "question": "你的身份",
+    "type": "multi",
+    "showIf": {},
+    "options": [
+      {
+        "id": "parent",
+        "label": "宝爸宝妈",
+        "showIf": {
+          "age": [
+            "young-adult",
+            "midlife"
+          ]
+        }
+      },
+      {
+        "id": "office",
+        "label": "上班族",
+        "showIf": {
+          "age": [
+            "youth",
+            "young-adult",
+            "midlife"
+          ]
+        }
+      },
+      {
+        "id": "elderly",
+        "label": "退休长辈",
+        "showIf": {
+          "age": [
+            "senior"
+          ]
+        }
+      },
+      {
+        "id": "student",
+        "label": "学生",
+        "showIf": {
+          "age": [
+            "youth"
+          ]
+        }
+      },
+      {
+        "id": "freelancer",
+        "label": "自由职业/个体",
+        "showIf": {
+          "age": [
+            "young-adult",
+            "midlife"
+          ]
+        }
+      },
+      {
+        "id": "homemaker",
+        "label": "全职带娃/顾家",
+        "showIf": {
+          "age": [
+            "young-adult",
+            "midlife"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "kid-age",
+    "question": "孩子多大",
+    "type": "single",
+    "showIf": {
+      "role": [
+        "parent"
+      ]
+    },
+    "options": [
+      {
+        "id": "0-1",
+        "label": "0~1岁（婴儿期）"
+      },
+      {
+        "id": "2-3",
+        "label": "2~3岁（幼儿期）"
+      },
+      {
+        "id": "4-6",
+        "label": "4~6岁（学龄前）"
+      },
+      {
+        "id": "7-12",
+        "label": "7~12岁（小学）"
+      },
+      {
+        "id": "13+",
+        "label": "13岁以上"
+      }
+    ]
+  },
+  {
+    "id": "interests",
+    "question": "感兴趣的方向（先选一两个，后续可改）",
+    "type": "multi",
+    "showIf": {},
+    "options": [
+      {
+        "id": "parenting",
+        "label": "🧸 育儿成长",
+        "showIf": {
+          "role": [
+            "parent",
+            "homemaker"
+          ]
+        }
+      },
+      {
+        "id": "health",
+        "label": "🩺 健康养生",
+        "showIf": {}
+      },
+      {
+        "id": "fitness",
+        "label": "🏃 运动健身",
+        "showIf": {
+          "age": [
+            "youth",
+            "young-adult",
+            "midlife"
+          ]
+        }
+      },
+      {
+        "id": "career",
+        "label": "💼 职场效率",
+        "showIf": {
+          "role": [
+            "office",
+            "freelancer"
+          ]
+        }
+      },
+      {
+        "id": "food",
+        "label": "👨‍🍳 美食生活",
+        "showIf": {}
+      },
+      {
+        "id": "ai",
+        "label": "🤖 AI工具",
+        "showIf": {
+          "role": [
+            "office",
+            "freelancer",
+            "student"
+          ]
+        }
+      },
+      {
+        "id": "companion",
+        "label": "🌳 情感陪伴",
+        "showIf": {}
+      },
+      {
+        "id": "tech-elderly",
+        "label": "📱 手机电脑技巧",
+        "showIf": {
+          "role": [
+            "elderly"
+          ]
+        }
+      }
+    ]
+  }
+] as const;
+export default questions;

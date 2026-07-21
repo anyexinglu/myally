@@ -21,7 +21,7 @@ interface FeedItem {
 Page({
   data: {
     section: 'skills',
-    skills: skillsData,
+    skills: [] as any[],
     solutions: solutionsData,
     expandedId: '',
     infoChannels: INFO_CHANNELS,
@@ -29,6 +29,65 @@ Page({
     feeds: [] as FeedItem[],
     feedsLoading: false,
     expandedFeedId: '',
+  },
+  onLoad() {
+    // 根据调试画像或真实画像排序技能
+    this.loadSortedSkills();
+  },
+  loadSortedSkills() {
+    const debugProfile = wx.getStorageSync('debug_profile');
+    let profile = debugProfile;
+    if (!profile) {
+      // 没有调试画像时尝试从云端加载
+      // 异步加载不影响首次渲染，排好序后 setData
+      this.tryLoadCloudProfile();
+    }
+    this.applySkillSort(profile);
+  },
+  tryLoadCloudProfile() {
+    // 从云端加载真实画像（异步，不影响首次渲染）
+    wx.cloud.callFunction({
+      name: 'conversations',
+      data: { action: 'listMemories' },
+      success: (res: any) => {
+        const p = (res.result?.data || []).find((m: any) => m.key === 'user_profile');
+        if (p) this.applySkillSortFromValue(p.value);
+      },
+      fail: () => {},
+    });
+  },
+  applySkillSortFromValue(value: string) {
+    // 解析 "age: young-adult；role: parent,office；kid-age: 2-3；interests: parenting,health,ai" 格式
+    const parts = (value || '').split('；');
+    const ans: Record<string, any> = {};
+    parts.forEach((part: string) => {
+      const [k, ...vs] = part.split('：');
+      const v = vs.join('：');
+      if (k === 'role' || k === 'interests') ans[k] = v.split(',').filter(Boolean);
+      else ans[k] = v;
+    });
+    this.applySkillSort(ans);
+  },
+  applySkillSort(profile: any) {
+    if (!profile || !profile.interests) return;
+    const interests: string[] = profile.interests;
+    const SKILL_MAP: Record<string, string> = {
+      parenting: 'parenting-advisor', health: 'health-qa', fitness: 'fitness-coach',
+      career: 'writing-polish', food: 'home-chef', ai: 'writing-polish',
+      companion: 'mood-listener', 'tech-elderly': 'health-qa',
+    };
+    const sorted = JSON.parse(JSON.stringify(skillsData));
+    sorted.forEach((s: any) => { s.matched = false; });
+    interests.forEach((i: string) => {
+      const id = SKILL_MAP[i];
+      if (id) { const f = sorted.find((s: any) => s.id === id); if (f) f.matched = true; }
+    });
+    sorted.sort((a: any, b: any) => {
+      if (a.matched && !b.matched) return -1;
+      if (!a.matched && b.matched) return 1;
+      return 0;
+    });
+    this.setData({ skills: sorted });
   },
   // 按频道缓存已拉取的日报，切回不重复请求
   feedsCache: {} as Record<string, FeedItem[]>,
