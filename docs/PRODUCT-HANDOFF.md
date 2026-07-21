@@ -661,3 +661,16 @@ CloudBase 当前官方能力已核验：
 依据：用户原话方向；属场景化"用完即走"解决方案的延伸。
 影响：①合规硬约束——AI合成图片属微信"深度合成"类目，个人主体不可上架，需企业主体+算法备案，将成为主体升级的触发点；②技术候选——虚拟试穿模型(如OutfitAnyone类开源方案或可灵/即梦试穿API)，效果/成本待spike实测；③隐私——用户照片须服务端处理方案，不入库或短期留存。
 下一步验证：技能专区真机验收通过后，做一个云函数调试穿API的spike验证效果与成本，再决策排期。
+
+### 信息频道与数据通路（2026-07-21，已实施）
+
+结论：精选页信息板块升级为四频道（场景方案｜AI日报｜育儿｜副业雷达）；日报内容由分身cron每日生成→云函数ingest-feed→daily_feeds集合→小程序直读。新增云函数ingest-feed（已部署，schema/单测/OpenSpec change featured-info-channels 齐备，58/60测试通过，2个既有红灯无关）。
+依据：用户要求"信息增加：AI日报/育儿知识/副业雷达，把分身这套加进去"。
+关键设计：
+- scope 服务端推导：sidehustle=personal（含妈妈项目私人细节），其余=public；上架公开版时过滤personal频道即可。
+- token 双通道：优先云函数环境变量 FEED_INGEST_TOKEN，回退 config 集合 feed_ingest_token 文档；不落仓库。
+- 订阅理念（用户明确）：订阅开关打开=默认推送；新人首次进入按个性化定制开哪些频道，后续可改。订阅开关+新人定制页排下一迭代。
+- "拉不取推"哲学（用户定）：不push用户不用的东西；推的前提是入口个性化。
+实测发现：本机CLI无 functions invoke 子命令；miniprogram-automator 0.12.1 与当前工具握手不兼容（checkVersion崩溃/403），headless模式未开放自动化——端到端invoke未自动验证，不谎称打通。另：手动tsc全量编译会在源码旁生成.js干扰工具编译（曾致 wxml not found），已清理，禁止再手动tsc emit。
+待办（控制台一次性手动）：①建config集合+feed_ingest_token文档；②daily_feeds安全规则 {"read":true,"write":false}；③ingest-feed开HTTP触发器（分身curl POST推送的唯一入口）；④云端测试invoke一次验证写库。
+待验证：四频道真机视觉、展开阅读、日报内容进库后的端到端链路。

@@ -20,6 +20,7 @@ const required = [
   'cloudfunctions/conversations/skills.js', 'cloudfunctions/conversations/tools.js',
   'packages/conversation/index.js', 'packages/agent/index.js', 'packages/memory/index.js',
   'packages/skills/index.js', 'packages/tools/index.js',
+  'cloudfunctions/ingest-feed/index.js', 'cloudfunctions/ingest-feed/package.json',
   'cloudbase/schema.json', 'scripts/cloudbase-readiness.js',
 ];
 
@@ -29,7 +30,7 @@ for (const file of required) {
   if (fs.readFileSync(full, 'utf8').includes('...[truncated]')) throw new Error(`truncated marker found: ${file}`);
 }
 
-for (const file of ['project.config.json', 'project.config.example.json', 'miniprogram/app.json', 'miniprogram/sitemap.json', 'cloudfunctions/entries/package.json', 'cloudfunctions/conversations/package.json', 'cloudbase/schema.json']) {
+for (const file of ['project.config.json', 'project.config.example.json', 'miniprogram/app.json', 'miniprogram/sitemap.json', 'cloudfunctions/entries/package.json', 'cloudfunctions/conversations/package.json', 'cloudfunctions/ingest-feed/package.json', 'cloudbase/schema.json']) {
   JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'));
 }
 
@@ -72,11 +73,12 @@ for (const file of [
   'cloudfunctions/conversations/agent.js', 'cloudfunctions/conversations/memory.js',
   'cloudfunctions/conversations/skills.js', 'cloudfunctions/conversations/tools.js',
   'packages/agent/index.js', 'packages/memory/index.js', 'packages/skills/index.js', 'packages/tools/index.js',
+  'cloudfunctions/ingest-feed/index.js',
 ]) {
   new vm.Script(fs.readFileSync(path.join(root, file), 'utf8'), { filename: file });
 }
 
-for (const file of ['cloudfunctions/entries/index.js', 'cloudfunctions/conversations/index.js']) {
+for (const file of ['cloudfunctions/entries/index.js', 'cloudfunctions/conversations/index.js', 'cloudfunctions/ingest-feed/index.js']) {
   const source = fs.readFileSync(path.join(root, file), 'utf8');
   if (!source.includes("typeof globalThis.structuredClone !== 'function'")) {
     throw new Error(`Node.js 16 structuredClone compatibility is missing: ${file}`);
@@ -119,5 +121,28 @@ if (!homeSourceForSkill.includes('pendingSkill') || !homeSourceForSkill.includes
 }
 const appSource = fs.readFileSync(path.join(root, 'miniprogram/app.ts'), 'utf8');
 if (!appSource.includes('pendingSkill')) throw new Error('app globalData must declare pendingSkill');
+
+const schemaManifest = JSON.parse(fs.readFileSync(path.join(root, 'cloudbase/schema.json'), 'utf8'));
+const schemaCollections = schemaManifest.collections.map((item) => item.name);
+for (const name of ['daily_feeds', 'config']) {
+  if (!schemaCollections.includes(name)) throw new Error(`schema.json missing collection: ${name}`);
+}
+if (!schemaManifest.cloudFunctions.includes('ingest-feed')) throw new Error('schema.json missing cloud function: ingest-feed');
+
+const ingestSource = fs.readFileSync(path.join(root, 'cloudfunctions/ingest-feed/index.js'), 'utf8');
+for (const marker of ['FEED_INGEST_TOKEN', 'feed_ingest_token', 'daily_feeds', "'ai-news'", 'parenting', 'sidehustle', '20000', 'FORBIDDEN']) {
+  if (!ingestSource.includes(marker)) throw new Error(`ingest-feed is missing required marker: ${marker}`);
+}
+if (/FEED_INGEST_TOKEN\s*=\s*['"][^'"]+['"]/.test(ingestSource)) {
+  throw new Error('ingest token must not be hardcoded');
+}
+
+if (!featuredLogic.includes('switchInfoChannel') || !featuredLogic.includes("collection('daily_feeds')") || !featuredLogic.includes('wx.cloud.database()')) {
+  throw new Error('featured page must query daily_feeds for info channels');
+}
+const featuredTemplate = fs.readFileSync(path.join(root, 'miniprogram/pages/featured/index.wxml'), 'utf8');
+if (!featuredTemplate.includes('内容生成中，明天再来看看')) {
+  throw new Error('featured feed channels must show the empty-state copy');
+}
 
 console.log(`project validation passed: ${required.length} required files, ${app.pages.length} pages`);

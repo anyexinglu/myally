@@ -19,21 +19,57 @@
   </block>
 
   <block wx:else>
-    <text class="hint section-hint">不同人群怎么用 AI，点开卡片看一步一步的做法。</text>
-    <view class="solution-card card" wx:for="{{solutions}}" wx:key="id">
-      <view class="solution-head" data-id="{{item.id}}" bindtap="toggleSolution">
-        <view class="solution-title-wrap">
-          <text class="solution-title">{{item.title}}</text>
-          <text class="solution-audience">适合：{{item.audience}}</text>
-        </view>
-        <text class="expand-mark">{{expandedId === item.id ? '收起 ▲' : '展开 ▼'}}</text>
-      </view>
-      <view wx:if="{{expandedId === item.id}}" class="solution-steps">
-        <view class="step-row" wx:for="{{item.steps}}" wx:for-item="step" wx:key="index">
-          <text class="step-index">{{index + 1}}</text>
-          <text class="step-text">{{step}}</text>
-        </view>
-      </view>
+    <view class="channel-chips">
+      <view
+        class="channel-chip {{infoChannel === item.id ? 'active' : ''}}"
+        wx:for="{{infoChannels}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="switchInfoChannel"
+      >{{item.name}}</view>
     </view>
+
+    <block wx:if="{{infoChannel === 'solutions'}}">
+      <text class="hint section-hint">不同人群怎么用 AI，点开卡片看一步一步的做法。</text>
+      <view class="solution-card card" wx:for="{{solutions}}" wx:key="id">
+        <view class="solution-head" data-id="{{item.id}}" bindtap="toggleSolution">
+          <view class="solution-title-wrap">
+            <text class="solution-title">{{item.title}}</text>
+            <text class="solution-audience">适合：{{item.audience}}</text>
+          </view>
+          <text class="expand-mark">{{expandedId === item.id ? '收起 ▲' : '展开 ▼'}}</text>
+        </view>
+        <view wx:if="{{expandedId === item.id}}" class="solution-steps">
+          <view class="step-row" wx:for="{{item.steps}}" wx:for-item="step" wx:key="index">
+            <text class="step-index">{{index + 1}}</text>
+            <text class="step-text">{{step}}</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <block wx:else>
+      <view wx:if="{{feedsLoading}}" class="feed-empty">
+        <text class="hint">加载中…</text>
+      </view>
+      <view wx:elif="{{feeds.length === 0}}" class="feed-empty">
+        <text class="hint">内容生成中，明天再来看看</text>
+      </view>
+      <block wx:else>
+        <view class="feed-card card" wx:for="{{feeds}}" wx:key="_id">
+          <view class="feed-head" data-id="{{item._id}}" bindtap="toggleFeed">
+            <view class="feed-title-wrap">
+              <view class="feed-meta">
+                <text class="feed-date">{{item.date}}</text>
+                <text wx:if="{{item.scope === 'personal'}}" class="feed-private">私人</text>
+              </view>
+              <text class="feed-title">{{item.title}}</text>
+            </view>
+            <text class="expand-mark">{{expandedFeedId === item._id ? '收起 ▲' : '展开 ▼'}}</text>
+          </view>
+          <view wx:if="{{expandedFeedId === item._id}}" class="feed-content">{{item.content}}</view>
+        </view>
+      </block>
+    </block>
   </block>
 </view>

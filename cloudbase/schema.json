@@ -37,6 +37,20 @@
       ]
     },
     {
+      "name": "daily_feeds",
+      "clientAccess": "read-only",
+      "clientAccessNote": "小程序端任何用户可读、写仅云函数/控制台；CLI 不支持设置安全规则，需在控制台手动设置一次（read:true, write:false）",
+      "indexes": [
+        { "name": "feed_type_date", "unique": true, "fields": [{ "name": "feedType", "direction": "asc" }, { "name": "date", "direction": "desc" }] }
+      ]
+    },
+    {
+      "name": "config",
+      "clientAccess": "deny",
+      "clientAccessNote": "仅存运维密钥文档（如 feed_ingest_token），客户端全部拒绝；ingest-feed 云函数服务端读取",
+      "indexes": []
+    },
+    {
       "name": "tasks",
       "clientAccess": "deny",
       "indexes": [
@@ -46,11 +60,12 @@
       ]
     }
   ],
-  "cloudFunctions": ["entries", "conversations", "asr"],
+  "cloudFunctions": ["entries", "conversations", "asr", "ingest-feed"],
   "cloudFunctionConfig": {
     "entries": { "timeoutSeconds": 3 },
     "conversations": { "timeoutSeconds": 60 },
-    "asr": { "timeoutSeconds": 20 }
+    "asr": { "timeoutSeconds": 20 },
+    "ingest-feed": { "timeoutSeconds": 10 }
   },
   "conversationDefaults": {
     "provider": "cloudbase",

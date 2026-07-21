@@ -94,3 +94,50 @@
   text-align: center;
 }
 .step-text { color: #33403b; flex: 1; font-size: 27rpx; line-height: 1.65; }
+
+.channel-chips {
+  display: flex;
+  gap: 14rpx;
+  margin-bottom: 22rpx;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.channel-chip {
+  background: #f0f7f4;
+  border-radius: 999rpx;
+  color: #5d6b66;
+  flex: 0 0 auto;
+  font-size: 25rpx;
+  font-weight: 600;
+  padding: 12rpx 28rpx;
+}
+
+.channel-chip.active {
+  background: #2aaa80;
+  color: #ffffff;
+}
+
+.feed-head { align-items: center; display: flex; gap: 20rpx; justify-content: space-between; }
+.feed-title-wrap { flex: 1; }
+.feed-meta { align-items: center; display: flex; gap: 12rpx; margin-bottom: 8rpx; }
+.feed-date { color: #278f6c; font-size: 23rpx; }
+.feed-private {
+  background: #fdf3e3;
+  border-radius: 999rpx;
+  color: #b07817;
+  font-size: 20rpx;
+  padding: 3rpx 14rpx;
+}
+.feed-title { color: #1d2925; display: block; font-size: 29rpx; font-weight: 680; line-height: 1.45; }
+.feed-empty { padding: 60rpx 0; text-align: center; }
+.feed-content {
+  border-top: 1rpx solid #edf2f0;
+  color: #33403b;
+  font-size: 27rpx;
+  line-height: 1.7;
+  margin-top: 20rpx;
+  padding-top: 18rpx;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
