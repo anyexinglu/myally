@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>myally Logo - 双盟 (Twin Ally)</title>
+  <defs>
+    <linearGradient id="allyLeft" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9CE7C8"/>
+      <stop offset="1" stop-color="#6FD9B5"/>
+    </linearGradient>
+    <linearGradient id="allyRight" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2DBAA0"/>
+      <stop offset="1" stop-color="#1A8B72"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Soft shadow -->
+  <ellipse cx="256" cy="430" rx="140" ry="12" fill="#1A8B72" opacity="0.15"/>
+
+  <!-- Right half (AI ally) -->
+  <path d="M 256 96
+           C 348 96, 416 168, 416 256
+           C 416 344, 348 416, 256 416
+           L 256 96 Z"
+        fill="url(#allyRight)"/>
+
+  <!-- Left half (user) - drawn second so it overlaps slightly -->
+  <path d="M 256 96
+           C 164 96, 96 168, 96 256
+           C 96 344, 164 416, 256 416
+           L 256 96 Z"
+        fill="url(#allyLeft)"/>
+
+  <!-- Center bond/heart accent -->
+  <path d="M 256 200
+           C 240 184, 216 184, 216 208
+           C 216 232, 256 268, 256 268
+           C 256 268, 296 232, 296 208
+           C 296 184, 272 184, 256 200 Z"
+        fill="#FFFFFF" opacity="0.95"/>
+
+  <!-- Small heart highlight -->
+  <circle cx="240" cy="210" r="4" fill="#FFB8C0" opacity="0.7"/>
+</svg>

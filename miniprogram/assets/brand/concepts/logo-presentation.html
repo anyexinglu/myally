@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>myally · 新版 Logo 方案</title>
+<style>
+  :root {
+    --bg: #FAF8F3;
+    --bg-card: #FFFFFF;
+    --ink: #1A2E28;
+    --ink-soft: #5A6B65;
+    --line: #E8E4D9;
+    --primary: #2DBAA0;
+    --primary-dark: #1A8B72;
+    --primary-light: #6FD9B5;
+    --primary-pale: #C8F0DF;
+    --accent: #F4C95D;
+    --shadow: 0 8px 32px rgba(26, 46, 40, 0.08);
+    --shadow-hover: 0 16px 48px rgba(26, 46, 40, 0.14);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    padding: 48px 24px 96px;
+  }
+  .container { max-width: 1280px; margin: 0 auto; }
+
+  /* Header */
+  .header { text-align: center; margin-bottom: 64px; }
+  .brand-mark {
+    display: inline-block;
+    padding: 8px 16px;
+    background: var(--primary-pale);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-dark);
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+  .header h1 {
+    font-size: 44px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+  }
+  .header h1 .accent { color: var(--primary); }
+  .header p {
+    font-size: 17px;
+    color: var(--ink-soft);
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  /* Brand DNA */
+  .dna {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 64px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
+  .dna-item h3 {
+    font-size: 13px;
+    color: var(--primary-dark);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+  .dna-item p { font-size: 15px; color: var(--ink-soft); }
+
+  /* Concept cards */
+  .concepts {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+    margin-bottom: 64px;
+  }
+  .concept {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+  }
+  .concept:hover { box-shadow: var(--shadow-hover); transform: translateY(-4px); }
+  .concept-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .concept-title h2 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .concept-title .tag {
+    font-size: 12px;
+    color: var(--primary-dark);
+    background: var(--primary-pale);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+  .concept-id {
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--primary-pale);
+    line-height: 1;
+  }
+  .logo-stage {
+    background: linear-gradient(135deg, #F5FBF7 0%, #E8F5EE 100%);
+    border-radius: 16px;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .logo-stage svg { width: 70%; height: 70%; }
+  .logo-stage.dark {
+    background: linear-gradient(135deg, #1A2E28 0%, #0F1F1B 100%);
+  }
+  .logo-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .logo-row .logo-stage { aspect-ratio: 1; }
+  .concept-desc {
+    font-size: 15px;
+    color: var(--ink-soft);
+    margin-bottom: 20px;
+  }
+  .feature-list {
+    list-style: none;
+    border-top: 1px solid var(--line);
+    padding-top: 20px;
+  }
+  .feature-list li {
+    font-size: 14px;
+    color: var(--ink-soft);
+    padding: 6px 0 6px 24px;
+    position: relative;
+  }
+  .feature-list li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--primary);
+    font-weight: 700;
+  }
+  .feature-list li strong { color: var(--ink); font-weight: 600; }
+
+  /* Application mockups */
+  .section-title {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .section-title h2 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .section-title p { color: var(--ink-soft); font-size: 16px; }
+
+  .apply {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin-bottom: 64px;
+  }
+  .apply-card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 24px;
+    text-align: center;
+  }
+  .apply-card h4 {
+    font-size: 13px;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  .app-icon {
+    width: 96px;
+    height: 96px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, var(--primary-light), var(--primary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    box-shadow: 0 8px 24px rgba(45, 186, 160, 0.3);
+  }
+  .app-icon svg { width: 64%; height: 64%; }
+  .apply-card p { font-size: 13px; color: var(--ink-soft); }
+
+  /* Decision matrix */
+  .matrix {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 32px;
+    overflow-x: auto;
+  }
+  .matrix table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .matrix th, .matrix td {
+    padding: 14px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+  }
+  .matrix th {
+    font-weight: 700;
+    color: var(--ink-soft);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .matrix td.concept-name {
+    font-weight: 700;
+    color: var(--primary-dark);
+  }
+  .stars { color: var(--accent); letter-spacing: 2px; }
+
+  /* Color palette */
+  .palette {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .swatch {
+    flex: 1;
+    text-align: center;
+  }
+  .swatch-color {
+    height: 64px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .swatch-name { font-size: 11px; color: var(--ink-soft); font-weight: 600; }
+  .swatch-hex { font-size: 11px; color: var(--ink-soft); font-family: monospace; }
+
+  @media (max-width: 900px) {
+    .concepts { grid-template-columns: 1fr; }
+    .apply { grid-template-columns: repeat(2, 1fr); }
+    .dna { grid-template-columns: 1fr; }
+    .header h1 { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="brand-mark">MYALLY · 品牌升级</div>
+    <h1>新版 <span class="accent">Logo</span> 方案</h1>
+    <p>基于 myally "个人 AI 伙伴、守望记忆" 的核心语义，提供 4 个不同方向的品牌标识方案</p>
+  </div>
+
+  <div class="dna">
+    <div class="dna-item">
+      <h3>品牌定位</h3>
+      <p>私人的 AI 伙伴，记录、守望、陪伴用户的数字记忆与日常对话</p>
+    </div>
+    <div class="dna-item">
+      <h3>核心情感</h3>
+      <p>温暖 · 信任 · 不打扰 · 像朋友 · 像备忘 · 像第二大脑</p>
+    </div>
+    <div class="dna-item">
+      <h3>设计语言</h3>
+      <p>延续现有薄荷绿/青绿主色（#2DBAA0），更克制、更现代、更易扩展</p>
+    </div>
+  </div>
+
+  <!-- Concept A: Watcher -->
+  <div class="concepts">
+
+    <div class="concept">
+      <div class="concept-header">
+        <div class="concept-title">
+          <h2>守望者 <span class="tag">Watcher</span></h2>
+        </div>
+        <div class="concept-id">A</div>
+      </div>
+
+      <div class="logo-row">
+        <div class="logo-stage">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+            <defs>
+              <linearGradient id="gA1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#6FD9B5"/>
+                <stop offset="1" stop-color="#1A8B72"/>
+              </linearGradient>
+              <radialGradient id="gA2" cx="0.4" cy="0.4">
+                <stop offset="0" stop-color="#2A5A4D"/>
+                <stop offset="1" stop-color="#0F2E26"/>
+              </radialGradient>
+            </defs>
+            <ellipse cx="256" cy="430" rx="150" ry="14" fill="#1A8B72" opacity="0.15"/>
+            <path d="M 96 256 C 96 158, 168 92, 256 92 C 344 92, 416 158, 416 256 C 416 314, 380 354, 332 374 L 348 432 C 350 444, 338 452, 328 444 L 268 402 C 264 400, 260 398, 256 398 C 160 396, 96 354, 96 256 Z" fill="url(#gA1)"/>
+            <circle cx="256" cy="240" r="44" fill="url(#gA2)"/>
+            <circle cx="240" cy="222" r="12" fill="#FFFFFF" opacity="0.85"/>
+            <circle cx="270" cy="252" r="5" fill="#FFFFFF" opacity="0.5"/>
+          </svg>
+        </div>
+        <div class="logo-stage dark">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+            <defs>
+              <linearGradient id="gA1d" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#6FD9B5"/>
+                <stop offset="1" stop-color="#1A8B72"/>
+              </linearGradient>
+              <radialGradient id="gA2d" cx="0.4" cy="0.4">
+                <stop offset="0" stop-color="#2A5A4D"/>
+                <stop offset="1" stop-color="#0F2E26"/>
+              </radialGradient>
+            </defs>
+            <path d="M 96 256 C 96 158, 168 92, 256 92 C 344 92, 416 158, 416 256 C 416 314, 380 354, 332 374 L 348 432 C 350 444, 338 452, 328 444 L 268 402 C 264 400, 260 398, 256 398 C 160 396, 96 354, 96 256 Z" fill="url(#gA1d)"/>
+            <circle cx="256" cy="240" r="44" fill="url(#gA2d)"/>
+            <circle cx="240" cy="222" r="12" fill="#FFFFFF" opacity="0.85"/>
+            <circle cx="270" cy="252" r="5" fill="#FFFFFF" opacity="0.5"/>
+          </svg>
+        </div>
+      </div>
+
+      <p class="concept-desc">眼睛 + 对话气泡的融合体。中央的瞳孔是"看见"，外形的尾巴是"开口说话"。整体像一只温柔注视着你的伙伴——知道你、了解你、也愿意开口陪你说。</p>
+      <ul class="feature-list">
+        <li><strong>语义契合度</strong>：直接呼应"守望"功能页，是 4 个方案里最切题</li>
+        <li><strong>记忆点</strong>：气泡尾巴让它一眼可辨，不会和通用眼睛图标混淆</li>
+        <li><strong>延展性</strong>：可拆出"瞳孔单独做 favicon"，"整体做大图标"</li>
+      </ul>
+    </div>
+
+    <!-- Concept B: Twin -->
+    <div class="concept">
+      <div class="concept-header">
+        <div class="concept-title">
+          <h2>双盟 <span class="tag">Twin Ally</span></h2>
+        </div>
+        <div class="concept-id">B</div>
+      </div>
+
+      <div class="logo-row">
+        <div class="logo-stage">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+            <defs>
+              <linearGradient id="gB1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#9CE7C8"/>
+                <stop offset="1" stop-color="#6FD9B5"/>
+              </linearGradient>
+              <linearGradient id="gB2" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#2DBAA0"/>
+                <stop offset="1" stop-color="#1A8B72"/>
+              </linearGradient>
+            </defs>
+            <ellipse cx="256" cy="430" rx="140" ry="12" fill="#1A8B72" opacity="0.15"/>
+            <path d="M 256 96 C 348 96, 416 168, 416 256 C 416 344, 348 416, 256 416 L 256 96 Z" fill="url(#gB2)"/>
+            <path d="M 256 96 C 164 96, 96 168, 96 256 C 96 344, 164 416, 256 416 L 256 96 Z" fill="url(#gB1)"/>
+            <path d="M 256 200 C 240 184, 216 184, 216 208 C 216 232, 256 268, 256 268 C 256 268, 296 232, 296 208 C 296 184, 272 184, 256 200 Z" fill="#FFFFFF" opacity="0.95"/>
+            <circle cx="240" cy="210" r="4" fill="#FFB8C0" opacity="0.7"/>
+          </svg>
+        </div>
+        <div class="logo-stage dark">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+            <defs>
+              <linearGradient id="gB1d" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#9CE7C8"/>
+                <stop offset="1" stop-color="#6FD9B5"/>
+              </linearGradient>
+              <linearGradient id="gB2d" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#2DBAA0"/>
+                <stop offset="1" stop-color="#1A8B72"/>
+              </linearGradient>
+            </defs>
+            <path d="M 256 96 C 348 96, 416 168, 416 256 C 416 344, 348 416, 256 416 L 256 96 Z" fill="url(#gB2d)"/>
+            <path d="M 256 96 C 164 96, 96 168, 96 256 C 96 344, 164 416, 256 416 L 256 96 Z" fill="url(#gB1d)"/>
+            <path d="M 256 200 C 240 184, 216 184, 216 208 C 216 232, 256 268, 256 268 C 256 268, 296 232, 296 208 C 296 184, 272 184, 256 200 Z" fill="#FFFFFF" opacity="0.95"/>
+            <circle cx="240" cy="210" r="4" fill="#FFB8C0" opacity="0.7"/>
+          </svg>
+        </div>
+      </div>
+
+      <p class="concept-desc">两片对称的叶子互依成心：浅绿是"我"，深绿是"我的 AI 伙伴"，白色小心是中间那条"我们之间的羁绊"。直接把 myally（我的盟友）的命名逻辑视觉化。</p>
+      <ul class="feature-list">
+        <li><strong>品牌名契合度</strong>：最高，"my"+"ally"两个主体的关系一目了然</li>
+        <li><strong>情感温度</strong>：心形符号带来最强的"陪伴感"和"亲密感"</li>
+        <li><strong>适用场景</strong>：偏温暖向品牌调性，适合做开屏、欢迎页主视觉</li>
+      </ul>
+    </div>
+
+    <!-- Concept C: Ripple -->
+    <div class="concept">
+      <div class="concept-header">
+        <div class="concept-title">
+          <h2>涟漪 <span class="tag">Ripple</span></h2>
+        </div>
+        <div class="concept-id">C</div>
+      </div>
+
+      <div class="logo-row">
+        <div class="logo-stage">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+            <defs>
+              <linearGradient id="gC1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#9CE7C8"/>
+                <stop offset="1" stop-color="#2DBAA0"/>
+              </linearGradient>
+              <linearGradient id="gC2" x1="0" y1="1" x2="1" y2="0">
+                <stop offset="0" stop-color="#1A8B72"/>
+                <stop offset="1" stop-color="#2DBAA0"/>
+              </linearGradient>
+            </defs>
+            <circle cx="256" cy="256" r="180" fill="none" stroke="url(#gC1)" stroke-width="14" opacity="0.35"/>
+            <circle cx="256" cy="256" r="130" fill="none" stroke="url(#gC1)" stroke-width="18" opacity="0.6"/>
+            <circle cx="256" cy="256" r="80" fill="none" stroke="url(#gC2)" stroke-width="22" opacity="0.85"/>
+            <circle cx="256" cy="256" r="32" fill="url(#gC2)"/>
+            <circle cx="246" cy="246" r="8" fill="#FFFFFF" opacity="0.9"/>
+            <circle cx="380" cy="180" r="6" fill="#2DBAA0" opacity="0.5"/>
+            <circle cx="120" cy="340" r="8" fill="#2DBAA0" opacity="0.4"/>
+            <circle cx="370" cy="370" r="5" fill="#2DBAA0" opacity="0.6"/>
+          </svg>
+        </div>
+        <div class="logo-stage dark">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+            <defs>
+              <linearGradient id="gC1d" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#9CE7C8"/>
+                <stop offset="1" stop-color="#2DBAA0"/>
+              </linearGradient>
+              <linearGradient id="gC2d" x1="0" y1="1" x2="1" y2="0">
+                <stop offset="0" stop-color="#1A8B72"/>
+                <stop offset="1" stop-color="#2DBAA0"/>
+              </linearGradient>
+            </defs>
+            <circle cx="256" cy="256" r="180" fill="none" stroke="url(#gC1d)" stroke-width="14" opacity="0.35"/>
+            <circle cx="256" cy="256" r="130" fill="none" stroke="url(#gC1d)" stroke-width="18" opacity="0.6"/>
+            <circle cx="256" cy="256" r="80" fill="none" stroke="url(#gC2d)" stroke-width="22" opacity="0.85"/>
+            <circle cx="256" cy="256" r="32" fill="url(#gC2d)"/>
+            <circle cx="246" cy="246" r="8" fill="#FFFFFF" opacity="0.9"/>
+            <circle cx="380" cy="180" r="6" fill="#2DBAA0" opacity="0.5"/>
+            <circle cx="120" cy="340" r="8" fill="#2DBAA0" opacity="0.4"/>
+            <circle cx="370" cy="370" r="5" fill="#2DBAA0" opacity="0.6"/>
+          </svg>
+        </div>
+      </div>
+
+      <p class="concept-desc">记忆像水面上的涟漪一圈圈散开。最中心那滴是"当下的瞬间"，外面三圈是"被记住的过去"。三个不对称的小点暗示"持续在发生的新记忆"。</p>
+      <ul class="feature-list">
+        <li><strong>抽象度</strong>：最克制最现代，可做系统级品牌标识（splash、加载动画）</li>
+        <li><strong>动态延展</strong>：天然适合做 loading、录音波纹、消息提醒等动效</li>
+        <li><strong>克制感</strong>：相比图形化方案，更专业、更有"工具感"</li>
+      </ul>
+    </div>
+
+    <!-- Concept D: Wordmark -->
+    <div class="concept">
+      <div class="concept-header">
+        <div class="concept-title">
+          <h2>字标 <span class="tag">Wordmark</span></h2>
+        </div>
+        <div class="concept-id">D</div>
+      </div>
+
+      <div class="logo-row">
+        <div class="logo-stage">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+            <defs>
+              <linearGradient id="gD" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#2DBAA0"/>
+                <stop offset="1" stop-color="#1A8B72"/>
+              </linearGradient>
+            </defs>
+            <path d="M 96 360 L 96 200 C 96 188, 106 178, 118 178 C 130 178, 140 188, 140 200 L 140 360 C 140 372, 130 382, 118 382 C 106 382, 96 372, 96 360 Z" fill="url(#gD)"/>
+            <path d="M 196 360 L 196 200 C 196 188, 206 178, 218 178 C 230 178, 240 188, 240 200 L 240 360 C 240 372, 230 382, 218 382 C 206 382, 196 372, 196 360 Z" fill="url(#gD)"/>
+            <path d="M 296 360 L 296 200 C 296 188, 306 178, 318 178 C 330 178, 340 188, 340 200 L 340 320 C 340 332, 330 342, 318 342 C 306 342, 296 352, 296 360 Z M 340 320 C 350 320, 360 308, 360 296 C 372 296, 384 284, 384 268 C 384 252, 372 240, 360 240 C 348 240, 340 252, 340 264 L 340 320 Z" fill="url(#gD)"/>
+            <path d="M 410 130 C 388 120, 372 132, 372 150 C 372 168, 388 180, 410 170 C 432 180, 448 168, 448 150 C 448 132, 432 120, 410 130 Z" fill="#1A8B72"/>
+            <path d="M 410 138 L 410 168" stroke="#9CE7C8" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M 340 282 C 340 250, 364 226, 396 226 C 428 226, 452 250, 452 282 L 452 360 C 452 372, 442 382, 430 382 C 418 382, 408 372, 408 360 L 408 290 C 408 282, 400 274, 388 274 C 376 274, 372 282, 372 290 L 372 296 C 360 296, 350 288, 348 282 Z" fill="url(#gD)"/>
+          </svg>
+        </div>
+        <div class="logo-stage dark">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+            <defs>
+              <linearGradient id="gDd" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#2DBAA0"/>
+                <stop offset="1" stop-color="#1A8B72"/>
+              </linearGradient>
+            </defs>
+            <path d="M 96 360 L 96 200 C 96 188, 106 178, 118 178 C 130 178, 140 188, 140 200 L 140 360 C 140 372, 130 382, 118 382 C 106 382, 96 372, 96 360 Z" fill="url(#gDd)"/>
+            <path d="M 196 360 L 196 200 C 196 188, 206 178, 218 178 C 230 178, 240 188, 240 200 L 240 360 C 240 372, 230 382, 218 382 C 206 382, 196 372, 196 360 Z" fill="url(#gDd)"/>
+            <path d="M 296 360 L 296 200 C 296 188, 306 178, 318 178 C 330 178, 340 188, 340 200 L 340 320 C 340 332, 330 342, 318 342 C 306 342, 296 352, 296 360 Z M 340 320 C 350 320, 360 308, 360 296 C 372 296, 384 284, 384 268 C 384 252, 372 240, 360 240 C 348 240, 340 252, 340 264 L 340 320 Z" fill="url(#gDd)"/>
+            <path d="M 410 130 C 388 120, 372 132, 372 150 C 372 168, 388 180, 410 170 C 432 180, 448 168, 448 150 C 448 132, 432 120, 410 130 Z" fill="#6FD9B5"/>
+            <path d="M 410 138 L 410 168" stroke="#C8F0DF" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M 340 282 C 340 250, 364 226, 396 226 C 428 226, 452 250, 452 282 L 452 360 C 452 372, 442 382, 430 382 C 418 382, 408 372, 408 360 L 408 290 C 408 282, 400 274, 388 274 C 376 274, 372 282, 372 290 L 372 296 C 360 296, 350 288, 348 282 Z" fill="url(#gDd)"/>
+          </svg>
+        </div>
+      </div>
+
+      <p class="concept-desc">把 "m" 字母的右侧笔画延伸成一片小叶子，a 的点也换成叶子。字母本身就是图标，是国际化品牌的常见做法（Airbnb、Meta 都走这条路线）。</p>
+      <ul class="feature-list">
+        <li><strong>可扩展性最强</strong>：favicon、浏览器标签、邮件签名都清晰</li>
+        <li><strong>国际化友好</strong>：纯字母 + 一片叶子，跨语言零理解成本</li>
+        <li><strong>克制专业</strong>：偏工具/产品品牌调性，少了情感温度</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- Application mockups -->
+  <div class="section-title">
+    <h2>实际使用场景（以 A · 守望者 为例）</h2>
+    <p>看 logo 在不同载体上的效果</p>
+  </div>
+
+  <div class="apply">
+    <div class="apply-card">
+      <h4>App 图标</h4>
+      <div class="app-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+          <defs>
+            <linearGradient id="appA1" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#6FD9B5"/>
+              <stop offset="1" stop-color="#1A8B72"/>
+            </linearGradient>
+            <radialGradient id="appA2" cx="0.4" cy="0.4">
+              <stop offset="0" stop-color="#2A5A4D"/>
+              <stop offset="1" stop-color="#0F2E26"/>
+            </radialGradient>
+          </defs>
+          <path d="M 96 256 C 96 158, 168 92, 256 92 C 344 92, 416 158, 416 256 C 416 314, 380 354, 332 374 L 348 432 C 350 444, 338 452, 328 444 L 268 402 C 264 400, 260 398, 256 398 C 160 396, 96 354, 96 256 Z" fill="url(#appA1)"/>
+          <circle cx="256" cy="240" r="44" fill="url(#appA2)"/>
+          <circle cx="240" cy="222" r="12" fill="#FFFFFF" opacity="0.85"/>
+        </svg>
+      </div>
+      <p>圆角矩形 + 留白</p>
+    </div>
+
+    <div class="apply-card">
+      <h4>Favicon 16px</h4>
+      <div style="display:flex; gap:12px; justify-content:center; align-items:center; margin-bottom:16px;">
+        <div style="width:16px; height:16px; background:linear-gradient(135deg, #6FD9B5, #1A8B72); border-radius:4px; display:flex; align-items:center; justify-content:center;">
+          <div style="width:6px; height:6px; background:#0F2E26; border-radius:50%;"></div>
+        </div>
+        <div style="width:32px; height:32px; background:linear-gradient(135deg, #6FD9B5, #1A8B72); border-radius:8px; display:flex; align-items:center; justify-content:center;">
+          <div style="width:12px; height:12px; background:#0F2E26; border-radius:50%;"></div>
+        </div>
+        <div style="width:48px; height:48px; background:linear-gradient(135deg, #6FD9B5, #1A8B72); border-radius:12px; display:flex; align-items:center; justify-content:center;">
+          <div style="width:18px; height:18px; background:#0F2E26; border-radius:50%;"></div>
+        </div>
+      </div>
+      <p>缩到 16px 仍可辨</p>
+    </div>
+
+    <div class="apply-card">
+      <h4>头像</h4>
+      <div style="width:96px; height:96px; background:linear-gradient(135deg, #6FD9B5, #1A8B72); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; box-shadow: 0 8px 24px rgba(45, 186, 160, 0.3);">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="width:60%; height:60%;">
+          <circle cx="256" cy="240" r="100" fill="#0F2E26"/>
+          <circle cx="220" cy="210" r="22" fill="#FFFFFF" opacity="0.85"/>
+        </svg>
+      </div>
+      <p>圆形裁切不破形</p>
+    </div>
+
+    <div class="apply-card">
+      <h4>单色印刷</h4>
+      <div style="width:96px; height:96px; margin:0 auto 16px;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+          <path d="M 96 256 C 96 158, 168 92, 256 92 C 344 92, 416 158, 416 256 C 416 314, 380 354, 332 374 L 348 432 C 350 444, 338 452, 328 444 L 268 402 C 264 400, 260 398, 256 398 C 160 396, 96 354, 96 256 Z" fill="#1A8B72"/>
+          <circle cx="256" cy="240" r="44" fill="#FFFFFF"/>
+        </svg>
+      </div>
+      <p>单色 logo 备选</p>
+    </div>
+  </div>
+
+  <!-- Decision matrix -->
+  <div class="section-title">
+    <h2>方案对比矩阵</h2>
+    <p>4 个维度的客观评估</p>
+  </div>
+
+  <div class="matrix">
+    <table>
+      <thead>
+        <tr>
+          <th>维度</th>
+          <th>A · 守望者</th>
+          <th>B · 双盟</th>
+          <th>C · 涟漪</th>
+          <th>D · 字标</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>品牌名契合度</strong></td>
+          <td>★★★★☆</td>
+          <td>★★★★★</td>
+          <td>★★★☆☆</td>
+          <td>★★★★☆</td>
+        </tr>
+        <tr>
+          <td><strong>情感温度</strong></td>
+          <td>★★★★☆</td>
+          <td>★★★★★</td>
+          <td>★★★☆☆</td>
+          <td>★★☆☆☆</td>
+        </tr>
+        <tr>
+          <td><strong>现代感 / 克制感</strong></td>
+          <td>★★★★☆</td>
+          <td>★★★☆☆</td>
+          <td>★★★★★</td>
+          <td>★★★★★</td>
+        </tr>
+        <tr>
+          <td><strong>小尺寸可辨性</strong></td>
+          <td>★★★★★</td>
+          <td>★★★★☆</td>
+          <td>★★★★★</td>
+          <td>★★★★★</td>
+        </tr>
+        <tr>
+          <td><strong>动效延展潜力</strong></td>
+          <td>★★★☆☆</td>
+          <td>★★☆☆☆</td>
+          <td>★★★★★</td>
+          <td>★★☆☆☆</td>
+        </tr>
+        <tr>
+          <td><strong>国际化潜力</strong></td>
+          <td>★★★★☆</td>
+          <td>★★★☆☆</td>
+          <td>★★★★☆</td>
+          <td>★★★★★</td>
+        </tr>
+        <tr style="background: #F5FBF7;">
+          <td><strong>综合推荐</strong></td>
+          <td><strong>🥇 主标识</strong></td>
+          <td>🥈 情感营销</td>
+          <td>🥉 系统/动效</td>
+          <td>🥉 极简/工具</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Color palette -->
+  <div class="section-title" style="margin-top:64px;">
+    <h2>推荐配色（基于 myally 现有色板）</h2>
+    <p>所有方案都基于这套色彩系统，可灵活切换</p>
+  </div>
+
+  <div class="matrix" style="padding: 24px 32px;">
+    <div class="palette">
+      <div class="swatch">
+        <div class="swatch-color" style="background:#1A8B72;"></div>
+        <div class="swatch-name">深青绿</div>
+        <div class="swatch-hex">#1A8B72</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#2DBAA0;"></div>
+        <div class="swatch-name">主青绿</div>
+        <div class="swatch-hex">#2DBAA0</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#6FD9B5;"></div>
+        <div class="swatch-name">浅青绿</div>
+        <div class="swatch-hex">#6FD9B5</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#9CE7C8;"></div>
+        <div class="swatch-name">薄荷</div>
+        <div class="swatch-hex">#9CE7C8</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#F4C95D;"></div>
+        <div class="swatch-name">暖黄点缀</div>
+        <div class="swatch-hex">#F4C95D</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center; margin-top:64px; padding:32px; color:var(--ink-soft); font-size:14px;">
+    选好后我可以继续做：完整 logo 使用规范、动画版、印章版、纯色版、不同尺寸切图
+  </div>
+
+</div>
+</body>
+</html>

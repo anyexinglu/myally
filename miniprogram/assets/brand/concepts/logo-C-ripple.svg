@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>myally Logo - 涟漪 (Ripple)</title>
+  <defs>
+    <linearGradient id="ripple1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9CE7C8"/>
+      <stop offset="1" stop-color="#2DBAA0"/>
+    </linearGradient>
+    <linearGradient id="ripple2" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#1A8B72"/>
+      <stop offset="1" stop-color="#2DBAA0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Outer ring (lightest, most subtle) -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="url(#ripple1)" stroke-width="14" opacity="0.35"/>
+
+  <!-- Middle ring -->
+  <circle cx="256" cy="256" r="130" fill="none" stroke="url(#ripple1)" stroke-width="18" opacity="0.6"/>
+
+  <!-- Inner ring (most solid) -->
+  <circle cx="256" cy="256" r="80" fill="none" stroke="url(#ripple2)" stroke-width="22" opacity="0.85"/>
+
+  <!-- Center dot - the drop of memory -->
+  <circle cx="256" cy="256" r="32" fill="url(#ripple2)"/>
+
+  <!-- Highlight on the dot -->
+  <circle cx="246" cy="246" r="8" fill="#FFFFFF" opacity="0.9"/>
+
+  <!-- Asymmetric small ripple - hint of activity -->
+  <circle cx="380" cy="180" r="6" fill="#2DBAA0" opacity="0.5"/>
+  <circle cx="120" cy="340" r="8" fill="#2DBAA0" opacity="0.4"/>
+  <circle cx="370" cy="370" r="5" fill="#2DBAA0" opacity="0.6"/>
+</svg>

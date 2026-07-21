@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>myally Logo - 字标 (Wordmark)</title>
+  <defs>
+    <linearGradient id="wordmarkFill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2DBAA0"/>
+      <stop offset="1" stop-color="#1A8B72"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Lowercase "m" with leaf dot - typographic, modern, scales perfectly -->
+
+  <!-- First leg of m -->
+  <path d="M 96 360
+           L 96 200
+           C 96 188, 106 178, 118 178
+           C 130 178, 140 188, 140 200
+           L 140 360
+           C 140 372, 130 382, 118 382
+           C 106 382, 96 372, 96 360 Z"
+        fill="url(#wordmarkFill)"/>
+
+  <!-- Second leg of m (middle stroke) -->
+  <path d="M 196 360
+           L 196 200
+           C 196 188, 206 178, 218 178
+           C 230 178, 240 188, 240 200
+           L 240 360
+           C 240 372, 230 382, 218 382
+           C 206 382, 196 372, 196 360 Z"
+        fill="url(#wordmarkFill)"/>
+
+  <!-- Third leg of m with leaf tip -->
+  <path d="M 296 360
+           L 296 200
+           C 296 188, 306 178, 318 178
+           C 330 178, 340 188, 340 200
+           L 340 320
+           C 340 332, 330 342, 318 342
+           C 306 342, 296 352, 296 360 Z
+           M 340 320
+           C 350 320, 360 308, 360 296
+           C 372 296, 384 284, 384 268
+           C 384 252, 372 240, 360 240
+           C 348 240, 340 252, 340 264
+           L 340 320 Z"
+        fill="url(#wordmarkFill)"/>
+
+  <!-- Leaf at top of "a" stem (replacing the dot) -->
+  <path d="M 410 130
+           C 388 120, 372 132, 372 150
+           C 372 168, 388 180, 410 170
+           C 432 180, 448 168, 448 150
+           C 448 132, 432 120, 410 130 Z"
+        fill="#1A8B72"/>
+
+  <!-- Vein on the leaf -->
+  <path d="M 410 138 L 410 168" stroke="#9CE7C8" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- "a" curve - a half ring opening to the left, attached to right leg area -->
+  <path d="M 340 282
+           C 340 250, 364 226, 396 226
+           C 428 226, 452 250, 452 282
+           L 452 360
+           C 452 372, 442 382, 430 382
+           C 418 382, 408 372, 408 360
+           L 408 290
+           C 408 282, 400 274, 388 274
+           C 376 274, 372 282, 372 290
+           L 372 296
+           C 360 296, 350 288, 348 282 Z"
+        fill="url(#wordmarkFill)"/>
+</svg>

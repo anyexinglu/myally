@@ -77,7 +77,22 @@ async function upsertFeedWithSelfHealing(record) {
 
 exports.main = async (event) => {
   try {
-    const { feedType, date, title, content, token } = event || {};
+    const { action, feedType, date, title, content, token } = event || {};
+
+    // query 模式：返回指定 feedType 的日报列表（按日期降序）
+    if (action === 'query') {
+      if (!feedType) return validationError('query 模式需要 feedType');
+      const collection = db.collection(FEEDS_COLLECTION);
+      let query = collection.where({ feedType }).orderBy('date', 'desc').limit(7);
+      try {
+        const result = await query.get();
+        return { ok: true, data: result.data || [] };
+      } catch (error) {
+        if (isCollectionMissing(error)) return { ok: true, data: [] };
+        throw error;
+      }
+    }
+
     if (!FEED_SCOPES[feedType]) return validationError('feedType 必须是 ai-news / parenting / sidehustle 之一');
     if (!DATE_PATTERN.test(String(date || ''))) return validationError('date 必须是 YYYY-MM-DD 格式');
     if (typeof title !== 'string' || !title.trim()) return validationError('title 不能为空');

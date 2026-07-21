@@ -54,23 +54,18 @@ Page({
   },
   loadFeeds(channelId: string) {
     this.setData({ feedsLoading: true, feeds: [] });
-    // app.ts onLaunch 已完成 wx.cloud.init，这里直接复用，不重复初始化
-    wx.cloud.database().collection('daily_feeds')
-      .where({ feedType: channelId })
-      .orderBy('date', 'desc')
-      .limit(7)
-      .get()
-      .then((res) => {
-        const feeds = (res.data || []) as FeedItem[];
+    wx.cloud.callFunction({
+      name: 'ingest-feed',
+      data: { action: 'query', feedType: channelId },
+      success: (res: any) => {
+        const feeds = (res.result?.data || []) as FeedItem[];
         this.feedsCache[channelId] = feeds;
         if (this.data.infoChannel === channelId) this.setData({ feeds, feedsLoading: false });
-      })
-      .catch((error) => {
-        // 集合未建/安全规则未配置等场景统一降级为空态，不打扰用户
-        console.warn('daily_feeds 查询失败，按空态展示', error);
-        this.feedsCache[channelId] = [];
-        if (this.data.infoChannel === channelId) this.setData({ feeds: [], feedsLoading: false });
-      });
+      },
+      fail: () => {
+        this.setData({ feedsLoading: false });
+      },
+    });
   },
   toggleFeed(event) {
     const id = event.currentTarget.dataset.id;
