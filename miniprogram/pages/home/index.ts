@@ -66,6 +66,12 @@ Page({
     await this._ready;
   },
   onShow() {
+    // 调试模式检查（覆盖 switchTab 回来的情况）
+    const isDebug = !!wx.getStorageSync('debug_onboard');
+    if (isDebug && !wx.getStorageSync('debug_profile') && !getCurrentPages().some(p => p.route === 'pages/onboarding/index')) {
+      wx.redirectTo({ url: '/pages/onboarding/index' });
+      return;
+    }
     this.applyPendingSkill();
   },
   // 精选页技能专区：消费 pendingSkill，插入技能开场白并激活角色预设；无 pendingSkill 时行为与现状一致
