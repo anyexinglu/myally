@@ -101,7 +101,7 @@ if (!homeLogic.includes('retrySend(event)') || !homeLogic.includes('requestId: d
 if (!homeTemplate.includes('bindtap="retrySend"')) throw new Error('failed conversation retry control is missing');
 
 const skillsData = JSON.parse(fs.readFileSync(path.join(root, 'miniprogram/data/skills.json'), 'utf8'));
-if (!Array.isArray(skillsData) || skillsData.length !== 12) throw new Error('skills.json must contain exactly 12 built-in skills');
+if (!Array.isArray(skillsData) || skillsData.length !== 13) throw new Error('skills.json must contain exactly 13 built-in skills');
 for (const skill of skillsData) {
   for (const field of ['id', 'name', 'emoji', 'oneLiner', 'welcomeMessage', 'systemPrompt']) {
     if (typeof skill[field] !== 'string' || !skill[field].trim()) throw new Error(`skill ${skill.id || '?'} missing field: ${field}`);
