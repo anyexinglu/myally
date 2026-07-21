@@ -226,9 +226,20 @@ Page({
   onVoiceStart(e: any) {
     if (this.data.sending) return;
 
-    // 直接尝试录音（微信会自动触发权限请求）
-    // 不先调 wx.authorize，因为 iOS 上可能不生效
-    this.startRecording(e);
+    // 先检查并请求录音权限
+    wx.authorize({
+      scope: 'scope.record',
+      success: () => this.startRecording(e),
+      fail: () => {
+        // 授权失败，尝试调起设置页让用户手动开启
+        wx.showModal({
+          title: '需要麦克风权限',
+          content: '请在设置中开启麦克风权限后使用语音输入。',
+          confirmText: '去设置',
+          success: (res) => { if (res.confirm) wx.openSetting(); },
+        });
+      },
+    });
   },
 
   startRecording(e: any) {
@@ -245,9 +256,15 @@ Page({
     } catch(_) {}
     */
 
+    // 销毁上一次可能残留的 recorder 实例
+    if (this._recorder) {
+      try { this._recorder.stop(); } catch(_) {}
+      try { (this._recorder as any).destroy?.(); } catch(_) {}
+      this._recorder = null;
+    }
+    this.clearVoiceCallbacks();
     try {
       const recorder = wx.getRecorderManager();
-      this.clearVoiceCallbacks();
       this._recorder = recorder;
       this._voiceStopPromise = new Promise<string>((resolve, reject) => {
         this._resolveVoiceStop = resolve;
