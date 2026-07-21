@@ -52,9 +52,15 @@
 
     <view wx:else class="chat-composer">
       <view class="attach-button" bindtap="chooseImage"><text class="attach-icon">＋</text></view>
-      <input class="chat-input" maxlength="2000" confirm-type="send" placeholder="{{temporary ? '临时说说…' : '跟我说说…'}}" placeholder-class="chat-placeholder" value="{{text}}" bindinput="onText" bindconfirm="send" />
-      <view class="voice-button {{text || selectedImage ? 'hidden' : ''}}" bindtouchstart="onVoiceStart" bindtouchend="onVoiceEnd" bindtouchmove="onVoiceMove">
-        <text class="voice-icon">🎤</text>
+      <!-- 语音模式：按住说话按钮 -->
+      <view wx:if="{{voiceMode}}" class="voice-hold-btn" bindtouchstart="onVoiceStart" bindtouchend="onVoiceEnd" bindtouchmove="onVoiceMove">
+        <text class="voice-hold-text">按住 说话</text>
+      </view>
+      <!-- 键盘模式：文本输入框 -->
+      <input wx:else class="chat-input" maxlength="2000" confirm-type="send" placeholder="{{temporary ? '临时说说…' : '跟我说说…'}}" placeholder-class="chat-placeholder" value="{{text}}" bindinput="onText" bindconfirm="send" />
+      <!-- 语音/键盘切换 -->
+      <view class="voice-toggle" bindtap="toggleVoiceMode">
+        <text class="voice-toggle-icon">{{voiceMode ? '⌨️' : '🎤'}}</text>
       </view>
       <button class="send-button {{text || selectedImage ? 'ready' : ''}}" disabled="{{sending || (!text && !selectedImage)}}" bindtap="send">↑</button>
     </view>

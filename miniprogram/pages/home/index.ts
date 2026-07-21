@@ -34,6 +34,7 @@ Page({
     messages: [WELCOME], conversationId: '', text: '', selectedImage: '',
     sending: false, anchor: 'message-welcome', temporary: false, headerTop: 44,
     recording: false, recordingDuration: 0, swipeUp: false,
+    voiceMode: false,
     streamingText: '', streamingMessageId: '',
     activeSkill: null as null | { id: string; name: string; emoji: string; systemPrompt: string },
     activeSkillBackground: '',
@@ -340,6 +341,9 @@ Page({
   onRecordingTap() {
     // 录音状态下点击录音条→触发结束并发送（兜底 touchend 不触发的情况）
     this.onVoiceEnd();
+  },
+  toggleVoiceMode() {
+    this.setData({ voiceMode: !this.data.voiceMode });
   },
 
   async onVoiceEnd() {

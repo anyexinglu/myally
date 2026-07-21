@@ -43,6 +43,11 @@
 .attach-button { align-items: center; color: #42c99d; display: flex; flex: 0 0 64rpx; height: 64rpx; justify-content: center; }
 .attach-icon { border: 3rpx solid #4ecfa5; border-radius: 50%; font-size: 33rpx; font-weight: 300; height: 39rpx; line-height: 36rpx; text-align: center; width: 39rpx; }
 .chat-input { color: #26312d; flex: 1; font-size: 28rpx; height: 78rpx; }
+.voice-hold-btn { flex: 1; height: 78rpx; background: #f0f7f4; border-radius: 999rpx; display: flex; align-items: center; justify-content: center; border: 1rpx solid #dceee7; }
+.voice-hold-btn:active { background: #dceee7; transform: scale(0.98); }
+.voice-hold-text { font-size: 28rpx; color: #4a5b55; font-weight: 550; }
+.voice-toggle { align-items: center; display: flex; flex: 0 0 64rpx; height: 64rpx; justify-content: center; }
+.voice-toggle-icon { font-size: 38rpx; }
 .chat-placeholder { color: #b0b9b6; }
 .send-button { align-items: center; background: #dce5e2 !important; border-radius: 50% !important; box-shadow: none; color: #fff !important; display: flex; flex: 0 0 72rpx; font-size: 41rpx !important; font-weight: 350; height: 72rpx; justify-content: center; line-height: 1 !important; margin: 0; padding: 0 0 7rpx; width: 72rpx; }
 .send-button.ready { background: #4ecfa5 !important; box-shadow: 0 8rpx 20rpx rgba(78,207,165,.25); }
