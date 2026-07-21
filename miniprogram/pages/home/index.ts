@@ -337,6 +337,10 @@ Page({
     const y = e.touches[0].clientY;
     this.setData({ swipeUp: this._startY - y > 80 });
   },
+  onRecordingTap() {
+    // 录音状态下点击录音条→触发结束并发送（兜底 touchend 不触发的情况）
+    this.onVoiceEnd();
+  },
 
   async onVoiceEnd() {
     if (!this.data.recording) return;
