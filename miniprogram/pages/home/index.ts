@@ -39,6 +39,22 @@ Page({
   },
   _ready: null as Promise<void> | null,
   async onLoad() {
+    // 首次进入检查是否已填用户画像，未填则跳转到 onboarding
+    // 来自技能跳转时不触发（已选技能说明已有交互）
+    const isFromSkill = (() => {
+      const app: any = getApp();
+      return !!(app && app.globalData && app.globalData.pendingSkill);
+    })();
+    if (!isFromSkill) {
+      try {
+        const res = await wx.cloud.callFunction({ name: 'conversations', data: { action: 'listMemories' } });
+        const hasProfile = (res.result as any)?.data?.some((m: any) => m.key === 'user_profile');
+        if (!hasProfile) {
+          wx.redirectTo({ url: '/pages/onboarding/index' });
+          return;
+        }
+      } catch (_) { /* 网络问题等不阻塞正常使用 */ }
+    }
     this.syncChromeMetrics();
     this._ready = this.loadNormalConversation();
     await this._ready;

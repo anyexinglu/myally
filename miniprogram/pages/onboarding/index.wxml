@@ -1,0 +1,32 @@
+<view class="container">
+  <!-- 进度条 -->
+  <view class="progress-bar">
+    <view class="progress-fill" style="width: {{(currentStep + 1) / questions.length * 100}}%"></view>
+  </view>
+  <text class="step-hint">{{currentStep + 1}} / {{questions.length}}</text>
+
+  <!-- 问题卡片 -->
+  <view class="question-card" wx:if="{{currentQuestion}}">
+    <text class="question-text">{{currentQuestion.question}}</text>
+    <view class="options">
+      <view
+        wx:for="{{currentQuestion.options}}"
+        wx:key="id"
+        class="option-item {{isSelected(item.id) ? 'selected' : ''}}"
+        bindtap="toggleOption"
+        data-id="{{item.id}}"
+      >
+        <text class="option-label">{{item.label}}</text>
+        <text wx:if="{{isSelected(item.id)}}" class="check-mark">✓</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="actions">
+    <button class="btn btn-prev" wx:if="{{currentStep > 0}}" bindtap="prevStep">上一步</button>
+    <button class="btn btn-next {{canProceed ? '' : 'disabled'}}" bindtap="nextStep">
+      {{currentStep === questions.length - 1 ? '完成' : '下一步'}}
+    </button>
+  </view>
+</view>

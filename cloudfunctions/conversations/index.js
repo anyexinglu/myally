@@ -96,6 +96,33 @@ async function resolveImageUrl(fileId) {
   return item.tempFileURL;
 }
 
+async function saveOnboarding(ownerId, answers) {
+  const cols = ['age', 'role', 'kid-age', 'interests'];
+  const summary = cols.filter((c) => answers[c]).map((c) => {
+    const v = answers[c];
+    return Array.isArray(v) ? `${c}: ${v.join(',')}` : `${c}: ${v}`;
+  }).join('；');
+  const now = new Date().toISOString();
+  const id = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  try {
+    await profileItems.add({
+      data: {
+        id, ownerId, key: 'user_profile',
+        type: 'current_state', value: `用户画像：${summary}`,
+        keywords: cols,
+        sourceType: 'explicit_user_statement',
+        confidence: 'confirmed', status: 'confirmed',
+        sensitivity: 'general',
+        updatedAt: now, observedAt: now,
+      },
+    });
+    return { ok: true, id };
+  } catch (error) {
+    console.error('saveOnboarding failed', error);
+    throw error;
+  }
+}
+
 function makeService() {
   const model = new CloudBaseModelAdapter({
     ai: cloud.ai(),
@@ -171,6 +198,7 @@ exports.main = async (event) => {
       case 'listMemories': data = await service.listMemories(OPENID); break;
       case 'deleteMemory': data = await service.deleteMemory(OPENID, event.memoryId); break;
       case 'deleteConversation': data = await service.deleteConversation(OPENID, event.conversationId); break;
+      case 'saveOnboarding': data = await saveOnboarding(OPENID, event.payload || {}); break;
       case 'listTasks': data = await taskService.list(OPENID); break;
       case 'listPendingTasks': data = await taskService.listPending(OPENID); break;
       case 'completeTask': data = await taskService.complete(OPENID, event.taskId); break;
