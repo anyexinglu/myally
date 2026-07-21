@@ -1,7 +1,7 @@
 .chat-page { background: #fff; box-sizing: border-box; min-height: 100vh; position: relative; }
 .chat-bg {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background-size: cover; background-position: center; opacity: 0.15;
+  background-size: cover; background-position: center; opacity: 0.25;
   pointer-events: none; z-index: 0;
 }
 .chat-head { align-items: center; box-sizing: border-box; display: flex; gap: 22rpx; height: 124rpx; justify-content: flex-start; padding: 18rpx 230rpx 10rpx 42rpx; }
