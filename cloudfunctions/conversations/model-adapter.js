@@ -74,6 +74,7 @@ Skill规则：${skill.instructions}
 当前已确认的相关个人记忆只允许使用下方提供的条目，不要声称记得其他内容：
 ${memoryItems.length ? memoryItems.map((item) => `- [${item.id}] ${item.type}: ${item.value}`).join('\n') : '（无）'}
 ${skillMemory ? `\n你对此用户的技能使用偏好（基于历史对话总结）：\n${skillMemory}` : ''}
+${roleBlock ? '\n【通用自进化指令】注意观察并记住用户使用本技能的偏好：喜欢问什么领域、习惯哪种方式、信息详细程度。后续对话中主动根据这些偏好调整。你的观察结果会在对话后自动保存，下次自动生效。' : ''}
 
 你可以直接回答，或请求一个白名单读取工具。只输出一个严格JSON对象：
 - 最终回答：{"type":"final","text":"自然中文回答"}
