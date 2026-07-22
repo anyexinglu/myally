@@ -41,41 +41,42 @@
     <view class="scroll-spacer"></view>
   </scroll-view>
 
-  <view class="composer-zone">
-    <view wx:if="{{selectedImage}}" class="selected-image"><image src="{{selectedImage}}" mode="aspectFill" /><view class="remove-image" bindtap="clearImage">×</view></view>
-    
-    <!-- 录音状态（微信原生风格） -->
-    <view wx:if="{{recording}}" class="recording-overlay" bindtap="onRecordingTap">
-      <!-- 绿色语音气泡+波形 -->
-      <view class="voice-bubble">
-        <view class="bubble-tail"></view>
-        <view class="wave-dense">
-          <view wx:for="{{waveHeights}}" wx:key="*this" class="wave-dense-bar" style="height:{{item}}rpx"></view>
-        </view>
-      </view>
-      <!-- 计时 -->
-      <text class="rec-dur">{{recordingDuration}}″</text>
-      <!-- 底部弧形控制区 -->
-      <view class="rec-arc-area">
-        <view class="arc-btn cancel-btn">取消</view>
-        <view class="arc-send">松开 发送</view>
-        <view class="arc-btn trans-btn">滑到这里 转文字</view>
+  <!-- 录音全屏覆盖 -->
+  <view wx:if="{{recording}}" class="recording-overlay">
+    <view class="voice-bubble">
+      <view class="bubble-tail"></view>
+      <view class="wave-dense">
+        <view wx:for="{{waveHeights}}" wx:key="*this" class="wave-bar" style="height:{{item}}rpx"></view>
       </view>
     </view>
+    <text class="rec-dur">{{recordingDuration}}″</text>
+    <view class="rec-arc-area">
+      <view class="arc-btn {{swipeUp ? 'hl' : ''}}" bindtap="cancelRecording">{{swipeUp ? '↑ 松开取消' : '取消'}}</view>
+      <view class="arc-send-wrap">
+        <view class="arc-send {{swipeUp ? 'dim' : ''}}">松开 发送</view>
+      </view>
+      <view class="arc-trans">{{swipeUp ? '转文字' : '滑到这里 转文字'}}</view>
+    </view>
+  </view>
 
-    <view wx:else class="chat-composer">
-      <view class="attach-button" bindtap="chooseImage"><text class="attach-icon">＋</text></view>
-      <!-- 语音模式：按住说话按钮 -->
-      <view wx:if="{{voiceMode}}" class="voice-hold-btn" bindtouchstart="onVoiceStart" bindtouchend="onVoiceEnd" bindtouchmove="onVoiceMove">
-        <text class="voice-hold-text">按住 说话</text>
+  <view class="composer-zone">
+    <view wx:if="{{selectedImage}}" class="selected-image"><image src="{{selectedImage}}" mode="aspectFill" /><view class="remove-image" bindtap="clearImage">×</view></view>
+
+    <view class="chat-composer">
+      <!-- 切换键 -->
+      <view class="toggle-key" bindtap="toggleVoiceMode">
+        <view wx:if="{{!voiceMode}}" class="icon-mic"></view>
+        <view wx:if="{{voiceMode}}" class="icon-kb"></view>
       </view>
-      <!-- 键盘模式：文本输入框 -->
+      <!-- 语音模式 -->
+      <view wx:if="{{voiceMode}}" class="voice-hold" bindtouchstart="onVoiceStart" bindtouchend="onVoiceEnd" bindtouchmove="onVoiceMove">
+        <text>按住 说话</text>
+      </view>
+      <!-- 键盘模式 -->
       <input wx:else class="chat-input" maxlength="2000" confirm-type="send" placeholder="{{temporary ? '临时说说…' : '跟我说说…'}}" placeholder-class="chat-placeholder" value="{{text}}" bindinput="onText" bindconfirm="send" />
-      <!-- 语音/键盘切换 -->
-      <view class="voice-toggle" bindtap="toggleVoiceMode">
-        <text class="voice-toggle-icon">{{voiceMode ? '⌨' : '🎤'}}</text>
-      </view>
-      <button class="send-button {{text || selectedImage ? 'ready' : ''}}" disabled="{{sending || (!text && !selectedImage)}}" bindtap="send">↑</button>
+      <!-- 表情 + 加号 -->
+      <view class="icon-emoji">☺</view>
+      <view class="icon-plus" bindtap="chooseImage">＋</view>
     </view>
   </view>
 </view>
