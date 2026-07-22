@@ -44,22 +44,22 @@
   <view class="composer-zone">
     <view wx:if="{{selectedImage}}" class="selected-image"><image src="{{selectedImage}}" mode="aspectFill" /><view class="remove-image" bindtap="clearImage">×</view></view>
     
-    <!-- 录音状态（微信风格全屏覆盖） -->
+    <!-- 录音状态（微信原生风格） -->
     <view wx:if="{{recording}}" class="recording-overlay" bindtap="onRecordingTap">
-      <view class="rec-top">
-        <view class="rec-btn cancel-btn" bindtap="cancelRecording">取消</view>
-        <view class="rec-btn trans-btn">转文字</view>
-      </view>
-      <view class="rec-center">
-        <view class="waveform">
-          <view wx:for="{{5}}" wx:key="*this" class="wave-bar" style="animation-delay: -{{item * 0.15}}s"></view>
+      <!-- 绿色语音气泡+波形 -->
+      <view class="voice-bubble">
+        <view class="bubble-tail"></view>
+        <view class="wave-dense">
+          <view wx:for="{{waveHeights}}" wx:key="*this" class="wave-dense-bar" style="height:{{item}}rpx"></view>
         </view>
-        <text class="rec-dur">{{recordingDuration}}″</text>
       </view>
-      <view class="rec-bottom {{swipeUp ? 'cancel' : ''}}">
-        <view class="rec-send-arc">
-          <text class="rec-send-text">{{swipeUp ? '松开取消' : '松开 发送'}}</text>
-        </view>
+      <!-- 计时 -->
+      <text class="rec-dur">{{recordingDuration}}″</text>
+      <!-- 底部弧形控制区 -->
+      <view class="rec-arc-area">
+        <view class="arc-btn cancel-btn">取消</view>
+        <view class="arc-send">松开 发送</view>
+        <view class="arc-btn trans-btn">滑到这里 转文字</view>
       </view>
     </view>
 

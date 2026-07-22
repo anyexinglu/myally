@@ -34,7 +34,7 @@ Page({
     messages: [WELCOME], conversationId: '', text: '', selectedImage: '',
     sending: false, anchor: 'message-welcome', temporary: false, headerTop: 44,
     recording: false, recordingDuration: 0, swipeUp: false,
-    voiceMode: false,
+    voiceMode: false, waveHeights: [] as number[],
     streamingText: '', streamingMessageId: '',
     activeSkill: null as null | { id: string; name: string; emoji: string; systemPrompt: string },
     activeSkillBackground: '',
@@ -294,6 +294,10 @@ Page({
     this.clearVoiceCallbacks();
     try {
       const recorder = wx.getRecorderManager();
+      // 生成30条随机波形高度
+      const heights: number[] = [];
+      for (let i = 0; i < 30; i++) heights.push(8 + Math.floor(Math.random() * 42));
+      this.setData({ waveHeights: heights });
       this._recorder = recorder;
       this._voiceStopPromise = new Promise<string>((resolve, reject) => {
         this._resolveVoiceStop = resolve;
