@@ -64,7 +64,7 @@ npm run verify
 3. 在开发者工具中先开通或绑定CloudBase测试环境；若工具显示`cloudProject: false`或环境列表为空，必须由项目管理员完成开通。然后在`miniprogram/config/env.ts`本机填写环境ID，不提交真实值。
 4. 创建`entries`、`messages`、`observations`和`profile_items`集合；安全规则禁止小程序端直接读写，所有访问只经云函数。建议索引见OpenSpec change的`design.md`。
 5. 在CloudBase AI+开启模型；默认适配`cloudbase / hy3`，用于当前成长计划/体验模型的最低配置冒烟。`MYALLY_MODEL_NAME`可覆盖基础回退；开通资源点套餐并在控制台启用对应模型后，可选设置`MYALLY_FAST_MODEL_NAME`、`MYALLY_REASONER_MODEL_NAME`、`MYALLY_MULTIMODAL_MODEL_NAME`和`MYALLY_OBSERVER_MODEL_NAME`。模型名必须以当前环境“模型管理”实际启用项为准；如需实时搜索，再配置受信HTTPS服务的`MYALLY_SEARCH_ENDPOINT`和仅存在于云函数环境的`MYALLY_SEARCH_API_KEY`。`conversations`会串行执行回答和记忆观察器，云端执行超时必须按部署清单设为60秒，不能保留平台默认3秒。
-6. 分别在`cloudfunctions/entries`、`cloudfunctions/conversations`、`cloudfunctions/asr`安装依赖并上传部署。`asr`使用云函数平台注入的临时凭证，不配置长期云密钥；腾讯云一句话识别服务需由账号持有人确认开通，并保持后付费关闭。
+6. 分别在`cloudfunctions/entries`、`cloudfunctions/conversations`、`cloudfunctions/asr`安装依赖并上传部署。`asr`使用云函数运行角色注入的临时凭证，不配置长期云密钥；腾讯云账号AppID无需写入请求或环境变量。为`asr`运行角色关联`cloudbase/asr-runtime-role-policy.example.json`所示的最小策略（仅`asr:SentenceRecognition`），由账号持有人确认一句话识别已开通，并保持后付费关闭。
 7. `entries`云函数环境变量设置`ADMIN_OPENIDS=<照护者openid>`。
 8. 依次验证文字→消息落库→模型回复、明确偏好→记忆中心→第二轮引用、当前时间→工具调用、删除→不再召回、临时模式→不读写记忆；最后用两个微信账号验证消息和记忆隔离。
 
@@ -81,6 +81,8 @@ npm run cloud:deploy
 ## 当前验收边界
 
 自动测试、Hermes-lite Fake Model闭环、TypeScript、OpenSpec严格校验、微信开发者工具编译和预览包生成已真实通过；新AppID的CloudBase环境、四个集合、客户端拒绝策略、11个业务索引和两个核心云函数均已就绪。成长计划10亿免费Token已领取，资源点模式已激活且按量付费、自动续费保持关闭；开发者工具内的真实消息、`hy3`回复、记忆写入/展示/召回、临时模式及白名单时间工具均已通过，OpenSpec 7.2完成。文字回复链路已修复。2026-07-19腾讯云中国大陆语音识别已开通，国内与跨境后付费均确认关闭；`asr`已部署到匹配环境并经CLI核验为`Active`、20秒超时，开发者工具重新编译为0错误。语音仍待物理真机验证录音授权、转写和AI回复。本机正式AppID和环境ID不得进入版本库。尚未完成的是物理真机两轮验证、双账号隔离、删除传播、模型/工具不可用降级及最终OpenSpec归档；在这些完成前不得称为全部端到端验收完成。
+
+2026-07-23进一步修正了ASR错误分类，并补充只允许`asr:SentenceRecognition`的运行角色最小策略模板。匹配的MyAlly体验环境已创建并绑定独立最小运行角色，`asr`已重新部署并经CLI核验为`Active / timeout=20 / Nodejs20.19`；使用相同角色的合成音频冒烟成功返回转写结果，证明临时凭证、CAM授权、服务开通和一句话识别API链路可用。一次性验证函数已删除，未开启后付费或自动续费。剩余边界是物理真机的麦克风授权、移动端AAC、转写后AI回复及临时录音删除复测。长期云API密钥不得写入项目或通过聊天传递。
 
 ## 已知安全债
 

@@ -42,3 +42,14 @@ test('ASR uses temporary cloud-function credentials and always removes the uploa
   assert.doesNotMatch(asr, /kimi-k3|audioTranslate|audioUrl/);
   assert.equal(pkg.dependencies['@tencentcloud/asr'], undefined);
 });
+
+test('ASR maps Tencent provider failures without misreporting every FailedOperation as not activated', () => {
+  const { safeErrorCode } = require('../cloudfunctions/asr/error-map');
+  assert.equal(safeErrorCode({ code: 'FailedOperation.UserNotRegistered' }), 'ASR_NOT_ACTIVATED');
+  assert.equal(safeErrorCode({ code: 'FailedOperation.UserHasNoFreeAmount' }), 'ASR_QUOTA_EXHAUSTED');
+  assert.equal(safeErrorCode({ code: 'FailedOperation.ServiceIsolate' }), 'ASR_BILLING_SUSPENDED');
+  assert.equal(safeErrorCode({ code: 'FailedOperation.ErrorRecognize' }), 'ASR_AUDIO_INVALID');
+  assert.equal(safeErrorCode({ code: 'UnauthorizedOperation' }), 'ASR_PERMISSION_REQUIRED');
+  assert.equal(safeErrorCode({ code: 'AuthFailure.TokenFailure' }), 'ASR_CREDENTIAL_INVALID');
+  assert.equal(safeErrorCode({ code: 'InternalError' }), 'ASR_FAILED');
+});

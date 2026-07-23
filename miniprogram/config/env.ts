@@ -1,2 +1,2 @@
 // 导入微信开发者工具后填写CloudBase环境ID；留空时使用当前默认环境。
-export const CLOUD_ENV_ID = 'cloudbase-d9gauee057e4e9f5f';
+export const CLOUD_ENV_ID = 'my-ally-d2gcm0mzq81aa1d8a';

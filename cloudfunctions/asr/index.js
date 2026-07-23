@@ -10,6 +10,7 @@
 const crypto = require('crypto');
 const https = require('https');
 const cloud = require('wx-server-sdk');
+const { providerErrorCode, safeErrorCode } = require('./error-map');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
@@ -17,6 +18,9 @@ const HOST = 'asr.tencentcloudapi.com';
 const SERVICE = 'asr';
 const ACTION = 'SentenceRecognition';
 const VERSION = '2019-06-14';
+const SUPPORTED_VOICE_FORMATS = new Set([
+  'wav', 'pcm', 'ogg-opus', 'speex', 'silk', 'mp3', 'm4a', 'aac', 'amr',
+]);
 
 function hmac(key, value, encoding) {
   return crypto.createHmac('sha256', key).update(value).digest(encoding);
@@ -28,6 +32,12 @@ function sha256(value) {
 
 function utcDate(timestamp) {
   return new Date(timestamp * 1000).toISOString().slice(0, 10);
+}
+
+function voiceFormat(fileId) {
+  const path = String(fileId || '').split(/[?#]/, 1)[0];
+  const extension = path.includes('.') ? path.slice(path.lastIndexOf('.') + 1).toLowerCase() : '';
+  return SUPPORTED_VOICE_FORMATS.has(extension) ? extension : 'aac';
 }
 
 function buildSignedRequest(payload, credentials, timestamp = Math.floor(Date.now() / 1000)) {
@@ -96,15 +106,6 @@ function postJson(body, headers) {
   });
 }
 
-function safeErrorCode(error) {
-  const code = String(error?.code || error?.message || 'ASR_FAILED');
-  if (/AuthFailure|Unauthorized|PermissionDenied/i.test(code)) return 'ASR_PERMISSION_REQUIRED';
-  if (/FailedOperation|ResourceUnavailable|NotFound/i.test(code)) return 'ASR_NOT_ACTIVATED';
-  if (/LimitExceeded|RequestLimitExceeded/i.test(code)) return 'ASR_QUOTA_EXHAUSTED';
-  if (/TIMEOUT/i.test(code)) return 'ASR_TIMEOUT';
-  return 'ASR_FAILED';
-}
-
 exports.main = async (event = {}) => {
   const fileId = String(event.fileId || '');
   const duration = Number(event.duration || 0);
@@ -125,9 +126,11 @@ exports.main = async (event = {}) => {
     if (!url) return { ok: false, code: 'AUDIO_URL_UNAVAILABLE', text: '' };
 
     const payload = {
+      ProjectId: 0,
+      SubServiceType: 2,
       EngSerViceType: '16k_zh',
       SourceType: 0,
-      VoiceFormat: 'aac',
+      VoiceFormat: voiceFormat(fileId),
       Url: url,
       FilterDirty: 1,
       FilterModal: 1,
@@ -145,13 +148,19 @@ exports.main = async (event = {}) => {
     if (response.Error) {
       const error = new Error(response.Error.Message || response.Error.Code);
       error.code = response.Error.Code;
+      error.requestId = response.RequestId;
       throw error;
     }
     const text = String(response.Result || '').trim();
     return { ok: true, code: text ? 'OK' : 'NO_SPEECH', text };
   } catch (error) {
-    console.error('ASR request failed', { code: safeErrorCode(error) });
-    return { ok: false, code: safeErrorCode(error), text: '' };
+    const code = safeErrorCode(error);
+    console.error('ASR request failed', {
+      code,
+      providerCode: providerErrorCode(error),
+      requestId: String(error?.requestId || ''),
+    });
+    return { ok: false, code, text: '' };
   } finally {
     try {
       await cloud.deleteFile({ fileList: [fileId] });
@@ -159,4 +168,4 @@ exports.main = async (event = {}) => {
   }
 };
 
-exports.__test = { buildSignedRequest, safeErrorCode, utcDate };
+exports.__test = { buildSignedRequest, safeErrorCode, utcDate, voiceFormat };

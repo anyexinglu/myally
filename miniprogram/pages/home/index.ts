@@ -262,13 +262,19 @@ Page({
 
   onVoiceStart(e: any) {
     if (this.data.sending) return;
-    // 直接尝试录音，不先 authorize（WEBVIEW 环境下 authorize 可能被拦截）
-    try {
-      this.setData({ voiceMode: false });
-      this.startRecording(e);
-    } catch (_) {
-      wx.showToast({ title: '录音不可用，请用文字输入', icon: 'none' });
-    }
+    // 先请求录音权限
+    wx.authorize({
+      scope: 'scope.record',
+      success: () => { this.startRecording(e); },
+      fail: () => {
+        wx.showModal({
+          title: '需要麦克风权限',
+          content: '请在设置中开启麦克风权限后使用语音输入。',
+          confirmText: '去设置',
+          success: (res) => { if (res.confirm) wx.openSetting(); },
+        });
+      },
+    });
   },
 
   startRecording(e: any) {
@@ -320,12 +326,12 @@ Page({
         this.setData({ recordingDuration: duration });
         if (duration >= 60) this.onVoiceEnd();
       }, 1000);
-    } catch (_) {
+    } catch (err: any) {
       this.endRecording();
       wx.showModal({
-        title: '录音不可用',
-        content: '语音识别组件暂不可用，请重新编译后再试，或先用文字输入。',
-        confirmText: '知道了',
+        title: '录音启动失败',
+        content: String(err?.errMsg || err?.message || err),
+        showCancel: false,
       });
     }
   },
@@ -386,11 +392,19 @@ Page({
       wx.hideLoading();
       if (!text) {
         const code = String(response?.result?.code || '');
-        const title = code === 'ASR_NOT_ACTIVATED' || code === 'ASR_PERMISSION_REQUIRED'
+        const title = code === 'ASR_NOT_ACTIVATED'
           ? '语音服务尚未开通，请先用文字输入'
-          : code === 'ASR_QUOTA_EXHAUSTED'
-            ? '本月语音额度已用完，请先用文字输入'
-            : '未识别到内容，请再试一次';
+          : code === 'ASR_PERMISSION_REQUIRED'
+            ? '语音服务权限未配置，请先用文字输入'
+            : code === 'ASR_QUOTA_EXHAUSTED'
+              ? '本月语音额度已用完，请先用文字输入'
+              : code === 'ASR_CREDENTIAL_UNAVAILABLE' || code === 'ASR_CREDENTIAL_INVALID'
+                ? '语音服务授权异常，请先用文字输入'
+                : code === 'ASR_BILLING_SUSPENDED'
+                  ? '语音服务当前不可用，请先用文字输入'
+                  : code === 'ASR_AUDIO_INVALID' || code === 'ASR_AUDIO_UNAVAILABLE'
+                    ? '录音暂时无法识别，请重试或用文字输入'
+                    : '未识别到内容，请再试一次';
         wx.showToast({ title, icon: 'none' });
         return;
       }
